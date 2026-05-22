@@ -15,7 +15,7 @@ public partial class App : System.Windows.Application
     private NotifyIcon? _trayIcon;
     private MainWindow? _mainWindow;
     private SettingsWindow? _settingsWindow;
-    private Timer? _pollTimer;
+    private System.Threading.Timer? _pollTimer;
     private readonly SemaphoreSlim _pollLock = new(1, 1);
     private readonly ConnectWiseService _cwService = new();
     private readonly SettingsService _settingsService = new();
