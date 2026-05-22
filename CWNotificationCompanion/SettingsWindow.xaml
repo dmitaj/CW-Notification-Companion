@@ -31,7 +31,7 @@
                 <!-- Section: API Connection -->
                 <TextBlock Text="API CONNECTION" FontSize="11" FontWeight="Bold"
                            Foreground="{StaticResource TextMutedBrush}"
-                           LetterSpacing="1" Margin="0,0,0,12"/>
+                           Margin="0,0,0,12"/>
 
                 <!-- Server URL -->
                 <StackPanel Margin="0,0,0,14">
