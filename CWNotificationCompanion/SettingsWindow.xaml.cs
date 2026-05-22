@@ -28,6 +28,7 @@ public partial class SettingsWindow : Window
         PrivateKeyBox.Password = s.PrivateKey;
         ClientIdBox.Text = s.ClientId;
         CompanySlugBox.Text = s.CompanySlug;
+        ResourceFilterBox.Text = s.ResourceFilter;
         PollIntervalBox.Text = s.PollIntervalMinutes.ToString();
     }
 
@@ -44,6 +45,7 @@ public partial class SettingsWindow : Window
             PrivateKey = PrivateKeyBox.Password,
             ClientId = ClientIdBox.Text.Trim(),
             CompanySlug = CompanySlugBox.Text.Trim(),
+            ResourceFilter = ResourceFilterBox.Text.Trim(),
             PollIntervalMinutes = interval
         };
     }

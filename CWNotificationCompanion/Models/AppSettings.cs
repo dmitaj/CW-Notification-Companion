@@ -8,6 +8,7 @@ public class AppSettings
     public string PrivateKey { get; set; } = "";
     public string ClientId { get; set; } = "";
     public string CompanySlug { get; set; } = "";
+    public string ResourceFilter { get; set; } = "";
     public int PollIntervalMinutes { get; set; } = 5;
 
     public bool IsConfigured =>

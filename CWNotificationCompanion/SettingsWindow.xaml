@@ -90,6 +90,15 @@
                                Style="{StaticResource HintText}"/>
                 </StackPanel>
 
+                <!-- Resource Filter -->
+                <StackPanel Margin="0,0,0,14">
+                    <TextBlock Text="Resource Filter (optional)" Style="{StaticResource FormLabel}"/>
+                    <TextBox x:Name="ResourceFilterBox" Style="{StaticResource FormTextBox}"
+                             ToolTip="Only show tickets assigned to this member. Leave blank to show all."/>
+                    <TextBlock Text="CW member identifier (username) to filter tickets by assigned tech. Leave blank for all tickets."
+                               Style="{StaticResource HintText}"/>
+                </StackPanel>
+
                 <!-- Poll Interval -->
                 <StackPanel Margin="0,0,0,20">
                     <TextBlock Text="Poll Interval (minutes)" Style="{StaticResource FormLabel}"/>

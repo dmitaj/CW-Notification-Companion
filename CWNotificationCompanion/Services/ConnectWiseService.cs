@@ -40,6 +40,13 @@ public class ConnectWiseService
         var url = $"{settings.ServerUrl.TrimEnd('/')}/service/tickets" +
                   $"?conditions={conditions}&fields={fields}&pageSize=100&orderBy=lastUpdated+desc";
 
+        if (!string.IsNullOrWhiteSpace(settings.ResourceFilter))
+        {
+            var childConditions = Uri.EscapeDataString(
+                $"resources/member/identifier=\"{settings.ResourceFilter}\"");
+            url += $"&childConditions={childConditions}";
+        }
+
         var response = await _httpClient.GetAsync(url);
         response.EnsureSuccessStatusCode();
 
