@@ -15,5 +15,10 @@
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
   </PropertyGroup>
 
+  <!-- WinForms implicit usings clash with WPF/Media types; removed globally, added as aliases in App.xaml.cs -->
+  <ItemGroup>
+    <Using Remove="System.Drawing" />
+    <Using Remove="System.Windows.Forms" />
+  </ItemGroup>
 
 </Project>

@@ -1,10 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Forms;
+using Drawing = System.Drawing;
+using Drawing2D = System.Drawing.Drawing2D;
+using WinForms = System.Windows.Forms;
 using CWNotificationCompanion.Models;
 using CWNotificationCompanion.Services;
 
@@ -12,7 +13,7 @@ namespace CWNotificationCompanion;
 
 public partial class App : System.Windows.Application
 {
-    private NotifyIcon? _trayIcon;
+    private WinForms.NotifyIcon? _trayIcon;
     private MainWindow? _mainWindow;
     private SettingsWindow? _settingsWindow;
     private System.Threading.Timer? _pollTimer;
@@ -35,27 +36,27 @@ public partial class App : System.Windows.Application
 
     private void InitializeTrayIcon()
     {
-        _trayIcon = new NotifyIcon
+        _trayIcon = new WinForms.NotifyIcon
         {
             Icon = CreateTrayIcon(),
             Visible = true,
             Text = "CW Notification Companion"
         };
 
-        var menu = new ContextMenuStrip();
-        menu.Font = new Font("Segoe UI", 9f);
+        var menu = new WinForms.ContextMenuStrip();
+        menu.Font = new Drawing.Font("Segoe UI", 9f);
 
-        var openItem = new ToolStripMenuItem("Open Tickets");
+        var openItem = new WinForms.ToolStripMenuItem("Open Tickets");
         openItem.Click += (_, _) => ShowMainWindow(null);
         menu.Items.Add(openItem);
 
-        var settingsItem = new ToolStripMenuItem("Settings");
+        var settingsItem = new WinForms.ToolStripMenuItem("Settings");
         settingsItem.Click += (_, _) => ShowSettings();
         menu.Items.Add(settingsItem);
 
-        menu.Items.Add(new ToolStripSeparator());
+        menu.Items.Add(new WinForms.ToolStripSeparator());
 
-        var exitItem = new ToolStripMenuItem("Exit");
+        var exitItem = new WinForms.ToolStripMenuItem("Exit");
         exitItem.Click += (_, _) => ExitApp();
         menu.Items.Add(exitItem);
 
@@ -63,17 +64,21 @@ public partial class App : System.Windows.Application
         _trayIcon.DoubleClick += (_, _) => ShowMainWindow(null);
     }
 
-    private static Icon CreateTrayIcon()
+    private static Drawing.Icon CreateTrayIcon()
     {
-        var bmp = new Bitmap(32, 32);
-        using var g = Graphics.FromImage(bmp);
-        g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-        g.Clear(Color.Transparent);
-        g.FillEllipse(new SolidBrush(Color.FromArgb(37, 99, 235)), 1, 1, 30, 30);
-        using var font = new Font("Segoe UI", 9f, FontStyle.Bold);
-        var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
-        g.DrawString("CW", font, System.Drawing.Brushes.White, new RectangleF(0, 0, 32, 32), sf);
-        return Icon.FromHandle(bmp.GetHicon());
+        var bmp = new Drawing.Bitmap(32, 32);
+        using var g = Drawing.Graphics.FromImage(bmp);
+        g.SmoothingMode = Drawing2D.SmoothingMode.AntiAlias;
+        g.Clear(Drawing.Color.Transparent);
+        g.FillEllipse(new Drawing.SolidBrush(Drawing.Color.FromArgb(37, 99, 235)), 1, 1, 30, 30);
+        using var font = new Drawing.Font("Segoe UI", 9f, Drawing.FontStyle.Bold);
+        var sf = new Drawing.StringFormat
+        {
+            Alignment = Drawing.StringAlignment.Center,
+            LineAlignment = Drawing.StringAlignment.Center
+        };
+        g.DrawString("CW", font, Drawing.Brushes.White, new Drawing.RectangleF(0, 0, 32, 32), sf);
+        return Drawing.Icon.FromHandle(bmp.GetHicon());
     }
 
     public void StartPolling()
@@ -81,7 +86,8 @@ public partial class App : System.Windows.Application
         _pollTimer?.Dispose();
         var settings = _settingsService.Load();
         int intervalMs = Math.Max(settings.PollIntervalMinutes, 1) * 60_000;
-        _pollTimer = new Timer(_ => _ = PollAsync(), null, TimeSpan.Zero, TimeSpan.FromMilliseconds(intervalMs));
+        _pollTimer = new System.Threading.Timer(
+            _ => _ = PollAsync(), null, TimeSpan.Zero, TimeSpan.FromMilliseconds(intervalMs));
     }
 
     private async Task PollAsync()
@@ -154,9 +160,7 @@ public partial class App : System.Windows.Application
     public void ShowMainWindow(List<Ticket>? tickets)
     {
         if (_mainWindow == null || !_mainWindow.IsLoaded)
-        {
             _mainWindow = new MainWindow(_settingsService, _cwService);
-        }
 
         if (tickets != null)
             _mainWindow.UpdateTickets(tickets);
