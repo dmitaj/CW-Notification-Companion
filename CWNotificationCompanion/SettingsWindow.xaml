@@ -1,0 +1,126 @@
+<Window x:Class="CWNotificationCompanion.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Settings — CW Notification Companion"
+        Width="520"
+        SizeToContent="Height"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource SurfaceBrush}"
+        FontFamily="Segoe UI">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="{StaticResource PrimaryBrush}" Padding="24,16">
+            <StackPanel>
+                <TextBlock Text="Settings" Foreground="White" FontSize="16" FontWeight="SemiBold"/>
+                <TextBlock Text="Configure ConnectWise API connection" Foreground="#BFDBFE" FontSize="12" Margin="0,3,0,0"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Form -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="24,20" >
+
+                <!-- Section: API Connection -->
+                <TextBlock Text="API CONNECTION" FontSize="11" FontWeight="Bold"
+                           Foreground="{StaticResource TextMutedBrush}"
+                           LetterSpacing="1" Margin="0,0,0,12"/>
+
+                <!-- Server URL -->
+                <StackPanel Margin="0,0,0,14">
+                    <TextBlock Text="Server URL" Style="{StaticResource FormLabel}"/>
+                    <TextBox x:Name="ServerUrlBox" Style="{StaticResource FormTextBox}"
+                             ToolTip="Base URL for the ConnectWise API"/>
+                    <TextBlock Text="e.g. https://na.myconnectwise.net/v4_6_release/apis/3.0"
+                               Style="{StaticResource HintText}"/>
+                </StackPanel>
+
+                <!-- Company ID -->
+                <StackPanel Margin="0,0,0,14">
+                    <TextBlock Text="Company ID" Style="{StaticResource FormLabel}"/>
+                    <TextBox x:Name="CompanyIdBox" Style="{StaticResource FormTextBox}"
+                             ToolTip="Your ConnectWise company identifier"/>
+                    <TextBlock Text="The company name used to log in to ConnectWise Manage"
+                               Style="{StaticResource HintText}"/>
+                </StackPanel>
+
+                <!-- Public Key -->
+                <StackPanel Margin="0,0,0,14">
+                    <TextBlock Text="Public Key" Style="{StaticResource FormLabel}"/>
+                    <TextBox x:Name="PublicKeyBox" Style="{StaticResource FormTextBox}"
+                             ToolTip="API member public key"/>
+                </StackPanel>
+
+                <!-- Private Key -->
+                <StackPanel Margin="0,0,0,14">
+                    <TextBlock Text="Private Key" Style="{StaticResource FormLabel}"/>
+                    <PasswordBox x:Name="PrivateKeyBox" Style="{StaticResource FormPasswordBox}"
+                                 ToolTip="API member private key"/>
+                </StackPanel>
+
+                <!-- Client ID -->
+                <StackPanel Margin="0,0,0,20">
+                    <TextBlock Text="Client ID" Style="{StaticResource FormLabel}"/>
+                    <TextBox x:Name="ClientIdBox" Style="{StaticResource FormTextBox}"
+                             ToolTip="Your registered API client ID (GUID format)"/>
+                    <TextBlock Text="Register your integration at developer.connectwise.com to obtain a Client ID"
+                               Style="{StaticResource HintText}"/>
+                </StackPanel>
+
+                <Separator Margin="0,4,0,20" Background="{StaticResource BorderBrush}"/>
+
+                <!-- Section: Application -->
+                <TextBlock Text="APPLICATION" FontSize="11" FontWeight="Bold"
+                           Foreground="{StaticResource TextMutedBrush}"
+                           Margin="0,0,0,12"/>
+
+                <!-- Company Slug -->
+                <StackPanel Margin="0,0,0,14">
+                    <TextBlock Text="Company URL Slug" Style="{StaticResource FormLabel}"/>
+                    <TextBox x:Name="CompanySlugBox" Style="{StaticResource FormTextBox}"
+                             ToolTip="Used to build ticket URLs for opening in browser"/>
+                    <TextBlock Text="The companyName parameter in ConnectWise ticket URLs (e.g. mycompany)"
+                               Style="{StaticResource HintText}"/>
+                </StackPanel>
+
+                <!-- Poll Interval -->
+                <StackPanel Margin="0,0,0,20">
+                    <TextBlock Text="Poll Interval (minutes)" Style="{StaticResource FormLabel}"/>
+                    <TextBox x:Name="PollIntervalBox" Style="{StaticResource FormTextBox}"
+                             Width="100" HorizontalAlignment="Left"
+                             ToolTip="How often to check ConnectWise for new responses"/>
+                </StackPanel>
+
+                <!-- Status message -->
+                <Border x:Name="StatusBorder" CornerRadius="5" Padding="12,9"
+                        Margin="0,0,0,4" Visibility="Collapsed">
+                    <TextBlock x:Name="StatusText" FontSize="13" TextWrapping="Wrap"/>
+                </Border>
+
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Footer Buttons -->
+        <Border Grid.Row="2" Background="{StaticResource SurfaceBrush}"
+                BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0"
+                Padding="24,14">
+            <DockPanel>
+                <Button Content="Save Settings" Style="{StaticResource PrimaryButton}"
+                        DockPanel.Dock="Right" Click="Save_Click" Margin="8,0,0,0"/>
+                <Button Content="Test Connection" Style="{StaticResource SecondaryButton}"
+                        DockPanel.Dock="Right" Click="TestConnection_Click"
+                        x:Name="TestButton"/>
+                <TextBlock x:Name="FooterHint" Text="Settings are saved to %AppData%\CWNotificationCompanion"
+                           Foreground="{StaticResource TextMutedBrush}" FontSize="11"
+                           VerticalAlignment="Center"/>
+            </DockPanel>
+        </Border>
+    </Grid>
+</Window>
