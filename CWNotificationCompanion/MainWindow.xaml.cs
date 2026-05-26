@@ -36,6 +36,43 @@ public partial class MainWindow : Window
         Top = area.Bottom - ActualHeight - 16;
     }
 
+    private const int SnapThreshold = 20; // physical pixels
+
+    protected override void OnLocationChanged(EventArgs e)
+    {
+        base.OnLocationChanged(e);
+        SnapToScreenCorners();
+    }
+
+    private void SnapToScreenCorners()
+    {
+        var hwnd = new System.Windows.Interop.WindowInteropHelper(this).Handle;
+        if (hwnd == IntPtr.Zero) return;
+
+        if (!NativeMethods.GetWindowRect(hwnd, out var win)) return;
+
+        var monitor = NativeMethods.MonitorFromWindow(hwnd, NativeMethods.MONITOR_DEFAULTTONEAREST);
+        var mi = NativeMethods.MONITORINFO.Create();
+        if (!NativeMethods.GetMonitorInfo(monitor, ref mi)) return;
+
+        var wa   = mi.rcWork;
+        var winW = win.Right  - win.Left;
+        var winH = win.Bottom - win.Top;
+
+        int newX = win.Left, newY = win.Top;
+        bool snap = false;
+
+        if      (Math.Abs(win.Left  - wa.Left)  <= SnapThreshold) { newX = wa.Left;         snap = true; }
+        else if (Math.Abs(win.Right - wa.Right)  <= SnapThreshold) { newX = wa.Right - winW; snap = true; }
+
+        if      (Math.Abs(win.Top    - wa.Top)    <= SnapThreshold) { newY = wa.Top;          snap = true; }
+        else if (Math.Abs(win.Bottom - wa.Bottom) <= SnapThreshold) { newY = wa.Bottom - winH; snap = true; }
+
+        if (snap)
+            NativeMethods.SetWindowPos(hwnd, IntPtr.Zero, newX, newY, 0, 0,
+                NativeMethods.SWP_NOSIZE | NativeMethods.SWP_NOZORDER | NativeMethods.SWP_NOACTIVATE);
+    }
+
     public void UpdateTickets(List<Ticket> tickets)
     {
         // Detect newly arrived tickets since the last refresh (skip on very first load)

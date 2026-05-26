@@ -226,11 +226,3 @@ public partial class App : System.Windows.Application
     }
 }
 
-internal static class NativeMethods
-{
-    [System.Runtime.InteropServices.DllImport("user32.dll")]
-    internal static extern bool FlashWindow(IntPtr hwnd, bool bInvert);
-
-    [System.Runtime.InteropServices.DllImport("user32.dll")]
-    internal static extern bool SetForegroundWindow(IntPtr hwnd);
-}
