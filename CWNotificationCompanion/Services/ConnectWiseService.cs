@@ -42,7 +42,7 @@ public class ConnectWiseService
         var conditions = Uri.EscapeDataString(conditionStr);
         var fields = Uri.EscapeDataString("id,summary,status,company,contactName,lastUpdated");
         var url = $"{settings.ServerUrl.TrimEnd('/')}/service/tickets" +
-                  $"?conditions={conditions}&fields={fields}&pageSize=100&orderBy=lastUpdated+desc";
+                  $"?conditions={conditions}&fields={fields}&pageSize=100&orderBy=lastUpdated+asc";
 
 
         var response = await _httpClient.GetAsync(url);
