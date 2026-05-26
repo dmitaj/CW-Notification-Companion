@@ -60,7 +60,13 @@ public partial class App : System.Windows.Application
         exitItem.Click += (_, _) => ExitApp();
         menu.Items.Add(exitItem);
 
-        _trayIcon.ContextMenuStrip = menu;
+        // Don't assign ContextMenuStrip directly — it positions on the wrong monitor in multi-monitor setups.
+        // Instead, show manually at the actual cursor position on right-click.
+        _trayIcon.MouseClick += (_, e) =>
+        {
+            if (e.Button == WinForms.MouseButtons.Right)
+                menu.Show(WinForms.Cursor.Position);
+        };
         _trayIcon.DoubleClick += (_, _) => ShowMainWindow(null);
     }
 
