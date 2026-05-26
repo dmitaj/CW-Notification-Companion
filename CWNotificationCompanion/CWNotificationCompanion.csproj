@@ -21,4 +21,10 @@
     <Using Remove="System.Windows.Forms" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Resource Include="Resources\CWNotify.ico" />
+    <Resource Include="Resources\CWNotify-256.png" />
+    <Resource Include="Resources\CWNotify-32.png" />
+  </ItemGroup>
+
 </Project>

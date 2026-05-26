@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:CWNotificationCompanion"
         Title="CW Notification Companion"
+        Icon="/Resources/CWNotify.ico"
         Width="760" MinWidth="600"
         MinHeight="200" MaxHeight="560"
         SizeToContent="Height"
@@ -10,7 +11,7 @@
         WindowStyle="SingleBorderWindow"
         ResizeMode="CanResizeWithGrip"
         WindowStartupLocation="Manual"
-        Background="{StaticResource SurfaceBrush}"
+        Background="{DynamicResource SurfaceBrush}"
         FontFamily="Segoe UI">
 
     <Window.Resources>
@@ -26,7 +27,7 @@
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <Border Grid.Row="0" Background="{StaticResource PrimaryBrush}" Padding="20,10">
+        <Border Grid.Row="0" Background="{DynamicResource PrimaryBrush}" Padding="20,10">
             <DockPanel>
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
                     <Button Content="⚙ Settings" Style="{StaticResource SecondaryButton}"
@@ -45,20 +46,25 @@
         </Border>
 
         <!-- Error Bar -->
-        <Border Grid.Row="1" x:Name="ErrorBar" Background="#FEF2F2" VerticalAlignment="Top"
-                BorderBrush="#FECACA" BorderThickness="0,0,0,1"
+        <Border Grid.Row="1" x:Name="ErrorBar"
+                Background="{DynamicResource ErrorBgBrush}"
+                BorderBrush="{DynamicResource ErrorBorderBrush}"
+                BorderThickness="0,0,0,1"
+                VerticalAlignment="Top"
                 Padding="16,10" Visibility="Collapsed">
-            <TextBlock x:Name="ErrorText" Foreground="#DC2626" FontSize="12"
-                       TextWrapping="Wrap"/>
+            <TextBlock x:Name="ErrorText"
+                       Foreground="{DynamicResource ErrorTextBrush}"
+                       FontSize="12" TextWrapping="Wrap"/>
         </Border>
 
         <!-- Empty State -->
         <Border Grid.Row="1" x:Name="EmptyState" Padding="40,32" Visibility="Collapsed">
             <StackPanel HorizontalAlignment="Center">
-                <TextBlock Text="✓" FontSize="40" Foreground="#22C55E"
+                <TextBlock Text="✓" FontSize="40"
+                           Foreground="{DynamicResource SuccessTextBrush}"
                            HorizontalAlignment="Center" Margin="0,0,0,12"/>
                 <TextBlock Text="No pending client responses" FontSize="15"
-                           Foreground="{StaticResource TextMutedBrush}"
+                           Foreground="{DynamicResource TextMutedBrush}"
                            HorizontalAlignment="Center"/>
             </StackPanel>
         </Border>
@@ -67,19 +73,18 @@
         <ScrollViewer Grid.Row="1" x:Name="TicketScrollViewer"
                       VerticalScrollBarVisibility="Auto"
                       HorizontalScrollBarVisibility="Disabled">
-            <ItemsControl x:Name="TicketList" Background="White">
+            <ItemsControl x:Name="TicketList" Background="{DynamicResource CardBrush}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Border x:Name="RowBorder"
-                                BorderBrush="{StaticResource BorderBrush}"
+                        <Border BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="0,0,0,1"
                                 Padding="16,12">
                             <Border.Style>
                                 <Style TargetType="Border">
-                                    <Setter Property="Background" Value="White"/>
+                                    <Setter Property="Background" Value="{DynamicResource RowBrush}"/>
                                     <Style.Triggers>
                                         <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter Property="Background" Value="{StaticResource RowHoverBrush}"/>
+                                            <Setter Property="Background" Value="{DynamicResource RowHoverBrush}"/>
                                         </Trigger>
                                     </Style.Triggers>
                                 </Style>
@@ -96,18 +101,16 @@
                                 <!-- Ticket # -->
                                 <TextBlock Grid.Column="0"
                                            Text="{Binding IdDisplay}"
-                                           FontWeight="SemiBold"
-                                           FontSize="13"
-                                           Foreground="{StaticResource PrimaryBrush}"
+                                           FontWeight="SemiBold" FontSize="13"
+                                           Foreground="{DynamicResource PrimaryBrush}"
                                            VerticalAlignment="Center"
                                            FontFamily="Consolas"/>
 
                                 <!-- Company -->
                                 <TextBlock Grid.Column="1"
                                            Text="{Binding CompanyDisplay}"
-                                           FontSize="13"
-                                           FontWeight="SemiBold"
-                                           Foreground="{StaticResource TextBrush}"
+                                           FontSize="13" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextBrush}"
                                            VerticalAlignment="Center"
                                            TextTrimming="CharacterEllipsis"
                                            Margin="8,0"/>
@@ -116,7 +119,7 @@
                                 <TextBlock Grid.Column="2"
                                            Text="{Binding Summary}"
                                            FontSize="12"
-                                           Foreground="{StaticResource TextMutedBrush}"
+                                           Foreground="{DynamicResource TextMutedBrush}"
                                            VerticalAlignment="Center"
                                            TextTrimming="CharacterEllipsis"
                                            Margin="0,0,12,0"/>
@@ -125,14 +128,10 @@
                                 <Border Grid.Column="3"
                                         Background="{Binding IsSecondResponse, Converter={StaticResource StatusColorConverter}}"
                                         BorderBrush="{Binding IsSecondResponse, Converter={StaticResource StatusBorderColorConverter}}"
-                                        BorderThickness="1"
-                                        CornerRadius="4"
-                                        Padding="7,3"
-                                        VerticalAlignment="Center"
-                                        Margin="0,0,12,0">
+                                        BorderThickness="1" CornerRadius="4"
+                                        Padding="7,3" VerticalAlignment="Center" Margin="0,0,12,0">
                                     <TextBlock Text="{Binding StatusDisplay}"
-                                               FontSize="11"
-                                               FontWeight="SemiBold"
+                                               FontSize="11" FontWeight="SemiBold"
                                                Foreground="{Binding IsSecondResponse, Converter={StaticResource StatusColorConverter}, ConverterParameter=text}"/>
                                 </Border>
 
@@ -149,6 +148,5 @@
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
         </ScrollViewer>
-
     </Grid>
 </Window>

@@ -1,0 +1,40 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Brand cyan matching the logo accent, softened for light backgrounds -->
+    <SolidColorBrush x:Key="PrimaryBrush"          Color="#0891B2"/>
+    <SolidColorBrush x:Key="PrimaryHoverBrush"      Color="#0E7490"/>
+    <SolidColorBrush x:Key="PrimaryPressedBrush"    Color="#155E75"/>
+
+    <!-- Surfaces -->
+    <SolidColorBrush x:Key="SurfaceBrush"           Color="#F8FAFC"/>
+    <SolidColorBrush x:Key="CardBrush"              Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="RowBrush"               Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="RowHoverBrush"          Color="#F1F5F9"/>
+    <SolidColorBrush x:Key="InputBgBrush"           Color="#FFFFFF"/>
+
+    <!-- Text -->
+    <SolidColorBrush x:Key="TextBrush"              Color="#0F172A"/>
+    <SolidColorBrush x:Key="TextMutedBrush"         Color="#64748B"/>
+    <SolidColorBrush x:Key="HeaderSubtextBrush"     Color="#CFFAFE"/>
+
+    <!-- Borders -->
+    <SolidColorBrush x:Key="BorderBrush"            Color="#E2E8F0"/>
+
+    <!-- Error state -->
+    <SolidColorBrush x:Key="ErrorBgBrush"           Color="#FEF2F2"/>
+    <SolidColorBrush x:Key="ErrorBorderBrush"       Color="#FECACA"/>
+    <SolidColorBrush x:Key="ErrorTextBrush"         Color="#DC2626"/>
+
+    <!-- Success state -->
+    <SolidColorBrush x:Key="SuccessTextBrush"       Color="#16A34A"/>
+
+    <!-- Status message (settings) -->
+    <SolidColorBrush x:Key="StatusOkBgBrush"        Color="#F0FDF4"/>
+    <SolidColorBrush x:Key="StatusOkBorderBrush"    Color="#BBF7D0"/>
+    <SolidColorBrush x:Key="StatusOkTextBrush"      Color="#166534"/>
+    <SolidColorBrush x:Key="StatusErrBgBrush"       Color="#FEF2F2"/>
+    <SolidColorBrush x:Key="StatusErrBorderBrush"   Color="#FECACA"/>
+    <SolidColorBrush x:Key="StatusErrTextBrush"     Color="#991B1B"/>
+
+</ResourceDictionary>

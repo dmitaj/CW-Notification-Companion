@@ -26,12 +26,24 @@ public partial class App : System.Windows.Application
         base.OnStartup(e);
         ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
+        var settings = _settingsService.Load();
+        ApplyTheme(settings.DarkMode);
+
         InitializeTrayIcon();
         StartPolling();
 
-        var settings = _settingsService.Load();
         if (!settings.IsConfigured)
             ShowSettings();
+    }
+
+    public static void ApplyTheme(bool dark)
+    {
+        var merged = System.Windows.Application.Current.Resources.MergedDictionaries;
+        merged.Clear();
+        merged.Add(new ResourceDictionary
+        {
+            Source = new Uri($"Themes/{(dark ? "Dark" : "Light")}.xaml", UriKind.Relative)
+        });
     }
 
     private void InitializeTrayIcon()
@@ -96,17 +108,22 @@ public partial class App : System.Windows.Application
 
     private static Drawing.Icon CreateTrayIcon()
     {
+        try
+        {
+            var stream = System.Windows.Application.GetResourceStream(
+                new Uri("pack://application:,,,/Resources/CWNotify.ico"))?.Stream;
+            if (stream != null) return new Drawing.Icon(stream);
+        }
+        catch { }
+
+        // Fallback: draw a simple icon programmatically
         var bmp = new Drawing.Bitmap(32, 32);
         using var g = Drawing.Graphics.FromImage(bmp);
         g.SmoothingMode = Drawing2D.SmoothingMode.AntiAlias;
         g.Clear(Drawing.Color.Transparent);
-        g.FillEllipse(new Drawing.SolidBrush(Drawing.Color.FromArgb(37, 99, 235)), 1, 1, 30, 30);
+        g.FillEllipse(new Drawing.SolidBrush(Drawing.Color.FromArgb(8, 145, 178)), 1, 1, 30, 30);
         using var font = new Drawing.Font("Segoe UI", 9f, Drawing.FontStyle.Bold);
-        var sf = new Drawing.StringFormat
-        {
-            Alignment = Drawing.StringAlignment.Center,
-            LineAlignment = Drawing.StringAlignment.Center
-        };
+        var sf = new Drawing.StringFormat { Alignment = Drawing.StringAlignment.Center, LineAlignment = Drawing.StringAlignment.Center };
         g.DrawString("CW", font, Drawing.Brushes.White, new Drawing.RectangleF(0, 0, 32, 32), sf);
         return Drawing.Icon.FromHandle(bmp.GetHicon());
     }

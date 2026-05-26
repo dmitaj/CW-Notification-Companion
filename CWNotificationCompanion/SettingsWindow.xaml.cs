@@ -31,6 +31,7 @@ public partial class SettingsWindow : Window
         ResourceFilterBox.Text = s.ResourceFilter;
         AnchorCornerBox.SelectedIndex = (int)s.AnchorCorner;
         PollIntervalBox.Text = s.PollIntervalMinutes.ToString();
+        DarkModeBox.IsChecked = s.DarkMode;
     }
 
     private AppSettings ReadForm()
@@ -48,7 +49,8 @@ public partial class SettingsWindow : Window
             CompanySlug = CompanySlugBox.Text.Trim(),
             ResourceFilter = ResourceFilterBox.Text.Trim(),
             AnchorCorner = (AnchorCorner)(AnchorCornerBox.SelectedIndex < 0 ? 3 : AnchorCornerBox.SelectedIndex),
-            PollIntervalMinutes = interval
+            PollIntervalMinutes = interval,
+            DarkMode = DarkModeBox.IsChecked == true
         };
     }
 
@@ -56,6 +58,7 @@ public partial class SettingsWindow : Window
     {
         var settings = ReadForm();
         _settingsService.Save(settings);
+        App.ApplyTheme(settings.DarkMode);
         _app.StartPolling();
         _app.RefreshMainWindowAnchor();
         ShowStatus("Settings saved successfully.", success: true);
@@ -96,16 +99,15 @@ public partial class SettingsWindow : Window
     {
         StatusBorder.Visibility = Visibility.Visible;
         StatusText.Text = message;
-        StatusBorder.Background = success
-            ? new SolidColorBrush(Color.FromRgb(240, 253, 244))
-            : new SolidColorBrush(Color.FromRgb(254, 242, 242));
-        StatusBorder.BorderBrush = success
-            ? new SolidColorBrush(Color.FromRgb(187, 247, 208))
-            : new SolidColorBrush(Color.FromRgb(254, 202, 202));
+
+        var bgKey = success ? "StatusOkBgBrush" : "StatusErrBgBrush";
+        var borderKey = success ? "StatusOkBorderBrush" : "StatusErrBorderBrush";
+        var textKey = success ? "StatusOkTextBrush" : "StatusErrTextBrush";
+
+        StatusBorder.SetResourceReference(BackgroundProperty, bgKey);
+        StatusBorder.SetResourceReference(BorderBrushProperty, borderKey);
         StatusBorder.BorderThickness = new Thickness(1);
-        StatusText.Foreground = success
-            ? new SolidColorBrush(Color.FromRgb(22, 101, 52))
-            : new SolidColorBrush(Color.FromRgb(153, 27, 27));
+        StatusText.SetResourceReference(ForegroundProperty, textKey);
     }
 
     private void HideStatus()
