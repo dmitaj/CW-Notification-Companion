@@ -159,6 +159,16 @@
                 <Setter Property="Margin" Value="0,3,0,0"/>
             </Style>
 
+            <!-- Form ComboBox -->
+            <Style x:Key="FormComboBox" TargetType="ComboBox">
+                <Setter Property="FontSize" Value="13"/>
+                <Setter Property="FontFamily" Value="Segoe UI"/>
+                <Setter Property="Padding" Value="8,6"/>
+                <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+                <Setter Property="Background" Value="White"/>
+                <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+            </Style>
+
         </ResourceDictionary>
     </Application.Resources>
 </Application>

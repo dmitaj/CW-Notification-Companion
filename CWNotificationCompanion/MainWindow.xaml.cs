@@ -20,28 +20,129 @@ public partial class MainWindow : Window
     private readonly ConnectWiseService _cwService;
     private HashSet<int>? _knownTicketIds;
 
+    private AnchorCorner _anchorCorner;
+    private double _anchorX, _anchorY;
+    private bool _isRepositioning;
+    private bool _isLoaded;
+
+    private const int SnapThreshold = 20; // physical pixels
+
     public MainWindow(SettingsService settingsService, ConnectWiseService cwService)
     {
         _settingsService = settingsService;
         _cwService = cwService;
         InitializeComponent();
-        Loaded += (_, _) => PositionBottomRight();
+        Loaded += OnLoaded;
         UpdateTickets([]);
     }
 
-    private void PositionBottomRight()
+    // ── Positioning & anchoring ───────────────────────────────────────────────
+
+    private void OnLoaded(object sender, RoutedEventArgs e)
     {
-        var area = SystemParameters.WorkArea;
-        Left = area.Right - Width - 16;
-        Top = area.Bottom - ActualHeight - 16;
+        var settings = _settingsService.Load();
+        _anchorCorner = settings.AnchorCorner;
+
+        if (settings.SavedLeft.HasValue && settings.SavedTop.HasValue)
+        {
+            _isRepositioning = true;
+            Left  = settings.SavedLeft.Value;
+            Top   = settings.SavedTop.Value;
+            if (settings.SavedWidth.HasValue)
+                Width = settings.SavedWidth.Value;
+            _isRepositioning = false;
+            UpdateAnchorFromCurrentPosition();
+        }
+        else
+        {
+            PositionToAnchorCorner();
+        }
+
+        _isLoaded = true;
     }
 
-    private const int SnapThreshold = 20; // physical pixels
+    private void PositionToAnchorCorner()
+    {
+        var wa = SystemParameters.WorkArea;
+        const double margin = 16;
+
+        _isRepositioning = true;
+        try
+        {
+            switch (_anchorCorner)
+            {
+                case AnchorCorner.TopLeft:
+                    Left = wa.Left   + margin;
+                    Top  = wa.Top    + margin;
+                    break;
+                case AnchorCorner.TopRight:
+                    Left = wa.Right  - Width - margin;
+                    Top  = wa.Top    + margin;
+                    break;
+                case AnchorCorner.BottomLeft:
+                    Left = wa.Left   + margin;
+                    Top  = wa.Bottom - ActualHeight - margin;
+                    break;
+                default: // BottomRight
+                    Left = wa.Right  - Width - margin;
+                    Top  = wa.Bottom - ActualHeight - margin;
+                    break;
+            }
+        }
+        finally
+        {
+            _isRepositioning = false;
+        }
+
+        UpdateAnchorFromCurrentPosition();
+    }
+
+    private void UpdateAnchorFromCurrentPosition()
+    {
+        _anchorX = _anchorCorner is AnchorCorner.TopRight  or AnchorCorner.BottomRight
+            ? Left + ActualWidth
+            : Left;
+        _anchorY = _anchorCorner is AnchorCorner.BottomLeft or AnchorCorner.BottomRight
+            ? Top + ActualHeight
+            : Top;
+    }
+
+    private void ApplyAnchor()
+    {
+        _isRepositioning = true;
+        try
+        {
+            if (_anchorCorner is AnchorCorner.TopRight or AnchorCorner.BottomRight)
+                Left = _anchorX - ActualWidth;
+            if (_anchorCorner is AnchorCorner.BottomLeft or AnchorCorner.BottomRight)
+                Top = _anchorY - ActualHeight;
+        }
+        finally
+        {
+            _isRepositioning = false;
+        }
+    }
+
+    public void RefreshAnchor()
+    {
+        _anchorCorner = _settingsService.Load().AnchorCorner;
+        if (_isLoaded)
+            PositionToAnchorCorner();
+    }
 
     protected override void OnLocationChanged(EventArgs e)
     {
         base.OnLocationChanged(e);
+        if (_isRepositioning) return;
+        UpdateAnchorFromCurrentPosition();
         SnapToScreenCorners();
+    }
+
+    protected override void OnRenderSizeChanged(SizeChangedInfo sizeInfo)
+    {
+        base.OnRenderSizeChanged(sizeInfo);
+        if (_isLoaded && !_isRepositioning)
+            ApplyAnchor();
     }
 
     private void SnapToScreenCorners()
@@ -62,52 +163,47 @@ public partial class MainWindow : Window
         int newX = win.Left, newY = win.Top;
         bool snap = false;
 
-        if      (Math.Abs(win.Left  - wa.Left)  <= SnapThreshold) { newX = wa.Left;         snap = true; }
-        else if (Math.Abs(win.Right - wa.Right)  <= SnapThreshold) { newX = wa.Right - winW; snap = true; }
+        if      (Math.Abs(win.Left  - wa.Left)   <= SnapThreshold) { newX = wa.Left;          snap = true; }
+        else if (Math.Abs(win.Right - wa.Right)   <= SnapThreshold) { newX = wa.Right  - winW; snap = true; }
 
-        if      (Math.Abs(win.Top    - wa.Top)    <= SnapThreshold) { newY = wa.Top;          snap = true; }
-        else if (Math.Abs(win.Bottom - wa.Bottom) <= SnapThreshold) { newY = wa.Bottom - winH; snap = true; }
+        if      (Math.Abs(win.Top    - wa.Top)    <= SnapThreshold) { newY = wa.Top;            snap = true; }
+        else if (Math.Abs(win.Bottom - wa.Bottom) <= SnapThreshold) { newY = wa.Bottom - winH;  snap = true; }
 
-        if (snap)
+        if (snap && (newX != win.Left || newY != win.Top))
             NativeMethods.SetWindowPos(hwnd, IntPtr.Zero, newX, newY, 0, 0,
                 NativeMethods.SWP_NOSIZE | NativeMethods.SWP_NOZORDER | NativeMethods.SWP_NOACTIVATE);
     }
 
+    // ── Ticket updates ────────────────────────────────────────────────────────
+
     public void UpdateTickets(List<Ticket> tickets)
     {
-        // Detect newly arrived tickets since the last refresh (skip on very first load)
         Ticket? newestNew = null;
         if (_knownTicketIds != null)
         {
             var newTickets = tickets.Where(t => !_knownTicketIds.Contains(t.Id)).ToList();
             if (newTickets.Count > 0)
-            {
                 newestNew = newTickets
                     .OrderByDescending(t => DateTime.TryParse(t.LastUpdated, out var dt) ? dt : DateTime.MinValue)
                     .First();
-            }
         }
 
         _knownTicketIds = tickets.Select(t => t.Id).ToHashSet();
-
         TicketList.ItemsSource = tickets;
 
         var hasTickets = tickets.Count > 0;
         TicketScrollViewer.Visibility = hasTickets ? Visibility.Visible : Visibility.Collapsed;
-        EmptyState.Visibility = hasTickets ? Visibility.Collapsed : Visibility.Visible;
-        ErrorBar.Visibility = Visibility.Collapsed;
+        EmptyState.Visibility         = hasTickets ? Visibility.Collapsed : Visibility.Visible;
+        ErrorBar.Visibility           = Visibility.Collapsed;
 
         HeaderText.Text = hasTickets
             ? $"Client Responses — {tickets.Count} ticket{(tickets.Count == 1 ? "" : "s")} awaiting response"
             : "Client Responses — All caught up";
 
         if (newestNew != null)
-        {
-            // Defer until after layout pass so the container exists
             Dispatcher.InvokeAsync(
                 () => FlashTicketRow(newestNew),
                 System.Windows.Threading.DispatcherPriority.Background);
-        }
     }
 
     private void FlashTicketRow(Ticket ticket)
@@ -118,8 +214,7 @@ public partial class MainWindow : Window
         var border = FindVisualChild<Border>(container);
         if (border == null) return;
 
-        // Set a local brush so we can animate its Color property
-        var flashBrush = new SolidColorBrush(Color.FromRgb(254, 243, 199)); // amber-100
+        var flashBrush = new SolidColorBrush(Color.FromRgb(254, 243, 199));
         border.Background = flashBrush;
 
         var animation = new ColorAnimation
@@ -131,7 +226,6 @@ public partial class MainWindow : Window
             FillBehavior = FillBehavior.Stop
         };
 
-        // Restore Style control of Background after animation finishes
         animation.Completed += (_, _) => border.ClearValue(Border.BackgroundProperty);
         flashBrush.BeginAnimation(SolidColorBrush.ColorProperty, animation);
     }
@@ -154,6 +248,8 @@ public partial class MainWindow : Window
         ErrorText.Text = $"Poll error: {message}";
         HeaderText.Text = "Client Responses — Error polling";
     }
+
+    // ── Event handlers ────────────────────────────────────────────────────────
 
     private void OpenInCW_Click(object sender, RoutedEventArgs e)
     {
@@ -197,8 +293,6 @@ public partial class MainWindow : Window
     {
         ((App)Application.Current).ShowSettings();
     }
-
-
 }
 
 public class StatusColorConverter : IValueConverter
@@ -206,14 +300,12 @@ public class StatusColorConverter : IValueConverter
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
         bool isSecond = value is bool b && b;
-        bool isText = parameter is string s && s == "text";
+        bool isText   = parameter is string s && s == "text";
 
         if (isText)
-        {
             return isSecond
                 ? new SolidColorBrush(Color.FromRgb(185, 28, 28))
                 : new SolidColorBrush(Color.FromRgb(146, 64, 14));
-        }
 
         return isSecond
             ? new SolidColorBrush(Color.FromRgb(254, 226, 226))

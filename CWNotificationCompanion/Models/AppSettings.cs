@@ -1,5 +1,7 @@
 namespace CWNotificationCompanion.Models;
 
+public enum AnchorCorner { TopLeft, TopRight, BottomLeft, BottomRight }
+
 public class AppSettings
 {
     public string ServerUrl { get; set; } = "https://na.myconnectwise.net/v4_6_release/apis/3.0";
@@ -10,6 +12,10 @@ public class AppSettings
     public string CompanySlug { get; set; } = "";
     public string ResourceFilter { get; set; } = "";
     public int PollIntervalMinutes { get; set; } = 5;
+    public AnchorCorner AnchorCorner { get; set; } = AnchorCorner.BottomRight;
+    public double? SavedLeft { get; set; }
+    public double? SavedTop { get; set; }
+    public double? SavedWidth { get; set; }
 
     public bool IsConfigured =>
         !string.IsNullOrWhiteSpace(ServerUrl) &&

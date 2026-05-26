@@ -211,8 +211,24 @@ public partial class App : System.Windows.Application
         _settingsWindow.Show();
     }
 
+    public void RefreshMainWindowAnchor()
+    {
+        _mainWindow?.RefreshAnchor();
+    }
+
+    private void SaveWindowState()
+    {
+        if (_mainWindow == null) return;
+        var settings = _settingsService.Load();
+        settings.SavedLeft  = _mainWindow.Left;
+        settings.SavedTop   = _mainWindow.Top;
+        settings.SavedWidth = _mainWindow.Width;
+        _settingsService.Save(settings);
+    }
+
     private void ExitApp()
     {
+        SaveWindowState();
         _pollTimer?.Dispose();
         _trayIcon?.Dispose();
         Shutdown();

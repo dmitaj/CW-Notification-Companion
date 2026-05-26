@@ -99,6 +99,19 @@
                                Style="{StaticResource HintText}"/>
                 </StackPanel>
 
+                <!-- Anchor Corner -->
+                <StackPanel Margin="0,0,0,14">
+                    <TextBlock Text="Window Anchor Corner" Style="{StaticResource FormLabel}"/>
+                    <ComboBox x:Name="AnchorCornerBox" Style="{StaticResource FormComboBox}">
+                        <ComboBoxItem Content="Top Left"/>
+                        <ComboBoxItem Content="Top Right"/>
+                        <ComboBoxItem Content="Bottom Left"/>
+                        <ComboBoxItem Content="Bottom Right"/>
+                    </ComboBox>
+                    <TextBlock Text="Corner the window locks to when it resizes. Drag it anywhere — it snaps back on resize."
+                               Style="{StaticResource HintText}"/>
+                </StackPanel>
+
                 <!-- Poll Interval -->
                 <StackPanel Margin="0,0,0,20">
                     <TextBlock Text="Poll Interval (minutes)" Style="{StaticResource FormLabel}"/>

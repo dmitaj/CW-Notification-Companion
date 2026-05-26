@@ -29,6 +29,7 @@ public partial class SettingsWindow : Window
         ClientIdBox.Text = s.ClientId;
         CompanySlugBox.Text = s.CompanySlug;
         ResourceFilterBox.Text = s.ResourceFilter;
+        AnchorCornerBox.SelectedIndex = (int)s.AnchorCorner;
         PollIntervalBox.Text = s.PollIntervalMinutes.ToString();
     }
 
@@ -46,6 +47,7 @@ public partial class SettingsWindow : Window
             ClientId = ClientIdBox.Text.Trim(),
             CompanySlug = CompanySlugBox.Text.Trim(),
             ResourceFilter = ResourceFilterBox.Text.Trim(),
+            AnchorCorner = (AnchorCorner)(AnchorCornerBox.SelectedIndex < 0 ? 3 : AnchorCornerBox.SelectedIndex),
             PollIntervalMinutes = interval
         };
     }
@@ -55,6 +57,7 @@ public partial class SettingsWindow : Window
         var settings = ReadForm();
         _settingsService.Save(settings);
         _app.StartPolling();
+        _app.RefreshMainWindowAnchor();
         ShowStatus("Settings saved successfully.", success: true);
     }
 
