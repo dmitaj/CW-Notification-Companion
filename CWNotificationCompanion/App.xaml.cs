@@ -55,55 +55,65 @@ public partial class App : System.Windows.Application
             Text = "CW Notification Companion"
         };
 
-        var menu = new WinForms.ContextMenuStrip();
-        menu.Font = new Drawing.Font("Segoe UI", 9f);
+        // WPF ContextMenu — avoids WinForms multi-monitor positioning bugs entirely.
+        // PlacementMode.MousePoint reads WPF's logical mouse position which correctly
+        // maps to whichever physical screen the cursor is on, including non-primary monitors.
+        var trayMenu = new System.Windows.Controls.ContextMenu();
 
-        var openItem = new WinForms.ToolStripMenuItem("Open Tickets");
+        var openItem = new System.Windows.Controls.MenuItem { Header = "Open Tickets" };
         openItem.Click += (_, _) => ShowMainWindow(null);
-        menu.Items.Add(openItem);
+        trayMenu.Items.Add(openItem);
 
-        var settingsItem = new WinForms.ToolStripMenuItem("Settings");
+        var settingsItem = new System.Windows.Controls.MenuItem { Header = "Settings" };
         settingsItem.Click += (_, _) => ShowSettings();
-        menu.Items.Add(settingsItem);
+        trayMenu.Items.Add(settingsItem);
 
-        menu.Items.Add(new WinForms.ToolStripSeparator());
+        trayMenu.Items.Add(new System.Windows.Controls.Separator());
 
-        var exitItem = new WinForms.ToolStripMenuItem("Exit");
+        var exitItem = new System.Windows.Controls.MenuItem { Header = "Exit" };
         exitItem.Click += (_, _) => ExitApp();
-        menu.Items.Add(exitItem);
+        trayMenu.Items.Add(exitItem);
 
-        // Show menu via a dummy owner Form positioned on the correct screen.
-        // Without an owner, WinForms defaults to the primary screen for bounds calculations
-        // and the menu appears on the wrong monitor in multi-monitor setups.
         _trayIcon.MouseClick += (_, e) =>
         {
             if (e.Button != WinForms.MouseButtons.Right) return;
-
-            var pos = WinForms.Cursor.Position;
-            var owner = new WinForms.Form
-            {
-                StartPosition = WinForms.FormStartPosition.Manual,
-                Location = pos,
-                Size = new Drawing.Size(1, 1),
-                ShowInTaskbar = false,
-                FormBorderStyle = WinForms.FormBorderStyle.None,
-                Opacity = 0,
-                TopMost = true
-            };
-
-            void OnMenuClosed(object? s, WinForms.ToolStripDropDownClosedEventArgs _)
-            {
-                menu.Closed -= OnMenuClosed;
-                owner.Close();
-                owner.Dispose();
-            }
-
-            menu.Closed += OnMenuClosed;
-            owner.Show();
-            NativeMethods.SetForegroundWindow(owner.Handle);
-            menu.Show(owner, owner.PointToClient(pos));
+            Dispatcher.Invoke(() => OpenTrayMenu(trayMenu));
         };
-        _trayIcon.DoubleClick += (_, _) => ShowMainWindow(null);
+        _trayIcon.DoubleClick += (_, _) => Dispatcher.Invoke(() => ShowMainWindow(null));
+    }
+
+    private static void OpenTrayMenu(System.Windows.Controls.ContextMenu menu)
+    {
+        if (menu.IsOpen) return;
+
+        // A proxy window is required so the ContextMenu has an owner for keyboard
+        // capture and auto-close on focus loss. It is kept off-screen until closed.
+        var proxy = new Window
+        {
+            Width = 1, Height = 1,
+            Left = -32000, Top = -32000,
+            ShowInTaskbar = false,
+            AllowsTransparency = true,
+            Background = System.Windows.Media.Brushes.Transparent,
+            WindowStyle = WindowStyle.None,
+            ResizeMode = ResizeMode.NoResize,
+            Topmost = true
+        };
+        proxy.Show();
+
+        var helper = new System.Windows.Interop.WindowInteropHelper(proxy);
+        NativeMethods.SetForegroundWindow(helper.Handle);
+
+        void OnClosed(object? s, RoutedEventArgs _)
+        {
+            menu.Closed -= OnClosed;
+            proxy.Close();
+        }
+        menu.Closed += OnClosed;
+
+        menu.PlacementTarget = proxy;
+        menu.Placement = System.Windows.Controls.Primitives.PlacementMode.MousePoint;
+        menu.IsOpen = true;
     }
 
     private static Drawing.Icon CreateTrayIcon()
