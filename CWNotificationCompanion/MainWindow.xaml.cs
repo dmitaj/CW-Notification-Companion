@@ -21,21 +21,15 @@ public partial class MainWindow : Window
         _settingsService = settingsService;
         _cwService = cwService;
         InitializeComponent();
-        PositionWindow();
+        Loaded += (_, _) => PositionBottomRight();
         UpdateTickets([]);
     }
 
-    private void PositionWindow()
+    private void PositionBottomRight()
     {
         var area = SystemParameters.WorkArea;
         Left = area.Right - Width - 16;
         Top = area.Bottom - ActualHeight - 16;
-    }
-
-    protected override void OnRenderSizeChanged(SizeChangedInfo sizeInfo)
-    {
-        base.OnRenderSizeChanged(sizeInfo);
-        PositionWindow();
     }
 
     public void UpdateTickets(List<Ticket> tickets)
