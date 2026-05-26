@@ -60,12 +60,36 @@ public partial class App : System.Windows.Application
         exitItem.Click += (_, _) => ExitApp();
         menu.Items.Add(exitItem);
 
-        // Don't assign ContextMenuStrip directly — it positions on the wrong monitor in multi-monitor setups.
-        // Instead, show manually at the actual cursor position on right-click.
+        // Show menu via a dummy owner Form positioned on the correct screen.
+        // Without an owner, WinForms defaults to the primary screen for bounds calculations
+        // and the menu appears on the wrong monitor in multi-monitor setups.
         _trayIcon.MouseClick += (_, e) =>
         {
-            if (e.Button == WinForms.MouseButtons.Right)
-                menu.Show(WinForms.Cursor.Position);
+            if (e.Button != WinForms.MouseButtons.Right) return;
+
+            var pos = WinForms.Cursor.Position;
+            var owner = new WinForms.Form
+            {
+                StartPosition = WinForms.FormStartPosition.Manual,
+                Location = pos,
+                Size = new Drawing.Size(1, 1),
+                ShowInTaskbar = false,
+                FormBorderStyle = WinForms.FormBorderStyle.None,
+                Opacity = 0,
+                TopMost = true
+            };
+
+            void OnMenuClosed(object? s, WinForms.ToolStripDropDownClosedEventArgs _)
+            {
+                menu.Closed -= OnMenuClosed;
+                owner.Close();
+                owner.Dispose();
+            }
+
+            menu.Closed += OnMenuClosed;
+            owner.Show();
+            NativeMethods.SetForegroundWindow(owner.Handle);
+            menu.Show(owner, owner.PointToClient(pos));
         };
         _trayIcon.DoubleClick += (_, _) => ShowMainWindow(null);
     }
@@ -206,4 +230,7 @@ internal static class NativeMethods
 {
     [System.Runtime.InteropServices.DllImport("user32.dll")]
     internal static extern bool FlashWindow(IntPtr hwnd, bool bInvert);
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    internal static extern bool SetForegroundWindow(IntPtr hwnd);
 }
