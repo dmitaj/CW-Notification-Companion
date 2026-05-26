@@ -54,16 +54,15 @@ public partial class MainWindow : Window
         _knownTicketIds = tickets.Select(t => t.Id).ToHashSet();
 
         TicketList.ItemsSource = tickets;
-        LastCheckedText.Text = $"Last checked: {DateTime.Now:h:mm:ss tt}";
 
         var hasTickets = tickets.Count > 0;
         TicketScrollViewer.Visibility = hasTickets ? Visibility.Visible : Visibility.Collapsed;
         EmptyState.Visibility = hasTickets ? Visibility.Collapsed : Visibility.Visible;
         ErrorBar.Visibility = Visibility.Collapsed;
 
-        SubtitleText.Text = hasTickets
-            ? $"{tickets.Count} ticket{(tickets.Count == 1 ? "" : "s")} awaiting response"
-            : "All caught up";
+        HeaderText.Text = hasTickets
+            ? $"Client Responses — {tickets.Count} ticket{(tickets.Count == 1 ? "" : "s")} awaiting response"
+            : "Client Responses — All caught up";
 
         if (newestNew != null)
         {
@@ -116,7 +115,7 @@ public partial class MainWindow : Window
     {
         ErrorBar.Visibility = Visibility.Visible;
         ErrorText.Text = $"Poll error: {message}";
-        SubtitleText.Text = "Error — see details below";
+        HeaderText.Text = "Client Responses — Error polling";
     }
 
     private void OpenInCW_Click(object sender, RoutedEventArgs e)
@@ -162,10 +161,7 @@ public partial class MainWindow : Window
         ((App)Application.Current).ShowSettings();
     }
 
-    private void Dismiss_Click(object sender, RoutedEventArgs e)
-    {
-        Hide();
-    }
+
 }
 
 public class StatusColorConverter : IValueConverter

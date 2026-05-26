@@ -23,12 +23,10 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <Border Grid.Row="0" Background="{StaticResource PrimaryBrush}" Padding="20,14">
+        <Border Grid.Row="0" Background="{StaticResource PrimaryBrush}" Padding="20,10">
             <DockPanel>
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
                     <Button Content="⚙ Settings" Style="{StaticResource SecondaryButton}"
@@ -40,17 +38,14 @@
                             BorderBrush="#FFFFFF44" Padding="10,5"
                             Click="Refresh_Click" x:Name="RefreshButton"/>
                 </StackPanel>
-                <StackPanel Orientation="Vertical" VerticalAlignment="Center">
-                    <TextBlock Text="Client Responses" Foreground="White"
-                               FontSize="16" FontWeight="SemiBold"/>
-                    <TextBlock x:Name="SubtitleText" Foreground="#BFDBFE"
-                               FontSize="12" Margin="0,2,0,0"/>
-                </StackPanel>
+                <TextBlock x:Name="HeaderText" Foreground="White"
+                           FontSize="14" FontWeight="SemiBold"
+                           VerticalAlignment="Center"/>
             </DockPanel>
         </Border>
 
         <!-- Error Bar -->
-        <Border Grid.Row="1" x:Name="ErrorBar" Background="#FEF2F2"
+        <Border Grid.Row="1" x:Name="ErrorBar" Background="#FEF2F2" VerticalAlignment="Top"
                 BorderBrush="#FECACA" BorderThickness="0,0,0,1"
                 Padding="16,10" Visibility="Collapsed">
             <TextBlock x:Name="ErrorText" Foreground="#DC2626" FontSize="12"
@@ -155,18 +150,5 @@
             </ItemsControl>
         </ScrollViewer>
 
-        <!-- Footer -->
-        <Border Grid.Row="3" Background="{StaticResource SurfaceBrush}"
-                BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0"
-                Padding="16,10">
-            <DockPanel>
-                <Button Content="Dismiss" Style="{StaticResource SecondaryButton}"
-                        DockPanel.Dock="Right" Click="Dismiss_Click" Margin="8,0,0,0"/>
-                <TextBlock x:Name="LastCheckedText"
-                           Foreground="{StaticResource TextMutedBrush}"
-                           FontSize="11"
-                           VerticalAlignment="Center"/>
-            </DockPanel>
-        </Border>
     </Grid>
 </Window>
