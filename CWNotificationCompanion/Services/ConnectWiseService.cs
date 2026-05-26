@@ -34,18 +34,16 @@ public class ConnectWiseService
     {
         SetAuth(settings);
 
-        var conditions = Uri.EscapeDataString(
-            "status/name=\"Client Responded\" OR status/name=\"Client Responded - 2\"");
+        var statusFilter = "status/name=\"Client Responded\" OR status/name=\"Client Responded - 2\"";
+        var conditionStr = string.IsNullOrWhiteSpace(settings.ResourceFilter)
+            ? statusFilter
+            : $"({statusFilter}) AND resources contains \"{settings.ResourceFilter}\"";
+
+        var conditions = Uri.EscapeDataString(conditionStr);
         var fields = Uri.EscapeDataString("id,summary,status,company,contactName,lastUpdated");
         var url = $"{settings.ServerUrl.TrimEnd('/')}/service/tickets" +
                   $"?conditions={conditions}&fields={fields}&pageSize=100&orderBy=lastUpdated+desc";
 
-        if (!string.IsNullOrWhiteSpace(settings.ResourceFilter))
-        {
-            var childConditions = Uri.EscapeDataString(
-                $"resources/member/identifier=\"{settings.ResourceFilter}\"");
-            url += $"&childConditions={childConditions}";
-        }
 
         var response = await _httpClient.GetAsync(url);
         response.EnsureSuccessStatusCode();
