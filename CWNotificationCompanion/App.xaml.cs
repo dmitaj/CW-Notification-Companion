@@ -20,6 +20,7 @@ public partial class App : System.Windows.Application
     private readonly SemaphoreSlim _pollLock = new(1, 1);
     private readonly ConnectWiseService _cwService = new();
     private readonly SettingsService _settingsService = new();
+    private readonly HashSet<int> _knownTicketIds = new();
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -164,6 +165,8 @@ public partial class App : System.Windows.Application
             {
                 if (tickets.Count > 0)
                 {
+                    bool hasNewTickets = tickets.Any(t => !_knownTicketIds.Contains(t.Id));
+
                     if (_mainWindow == null || !_mainWindow.IsLoaded)
                     {
                         _mainWindow = new MainWindow(_settingsService, _cwService);
@@ -175,12 +178,21 @@ public partial class App : System.Windows.Application
                         _mainWindow.UpdateTickets(tickets);
                         if (!_mainWindow.IsVisible)
                             _mainWindow.Show();
+                        else if (hasNewTickets && _mainWindow.WindowState == WindowState.Minimized)
+                        {
+                            _mainWindow.WindowState = WindowState.Normal;
+                            _mainWindow.Activate();
+                        }
                     }
+
+                    _knownTicketIds.Clear();
+                    foreach (var t in tickets) _knownTicketIds.Add(t.Id);
 
                     FlashTaskbar();
                 }
                 else
                 {
+                    _knownTicketIds.Clear();
                     _mainWindow?.UpdateTickets([]);
                 }
 
