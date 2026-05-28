@@ -172,16 +172,23 @@ public partial class App : System.Windows.Application
                         _mainWindow = new MainWindow(_settingsService, _cwService);
                         _mainWindow.UpdateTickets(tickets);
                         _mainWindow.Show();
+                        _mainWindow.Activate();
                     }
                     else
                     {
                         _mainWindow.UpdateTickets(tickets);
                         if (!_mainWindow.IsVisible)
+                        {
                             _mainWindow.Show();
+                            _mainWindow.Activate();
+                        }
                         else if (hasNewTickets && _mainWindow.WindowState == WindowState.Minimized)
                         {
-                            _mainWindow.WindowState = WindowState.Normal;
-                            _mainWindow.Activate();
+                            // SW_RESTORE is more reliable than setting WindowState from a
+                            // background process — bypasses Windows focus-stealing prevention.
+                            var hwnd = new System.Windows.Interop.WindowInteropHelper(_mainWindow).Handle;
+                            NativeMethods.ShowWindow(hwnd, NativeMethods.SW_RESTORE);
+                            NativeMethods.SetForegroundWindow(hwnd);
                         }
                     }
 

@@ -7,6 +7,9 @@ internal static class NativeMethods
 {
     [DllImport("user32.dll")] internal static extern bool FlashWindow(IntPtr hwnd, bool bInvert);
     [DllImport("user32.dll")] internal static extern bool SetForegroundWindow(IntPtr hwnd);
+    [DllImport("user32.dll")] internal static extern bool ShowWindow(IntPtr hwnd, int nCmdShow);
+
+    internal const int SW_RESTORE = 9;
     [DllImport("user32.dll")] internal static extern bool GetWindowRect(IntPtr hwnd, out RECT lpRect);
     [DllImport("user32.dll")] internal static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int x, int y, int cx, int cy, uint uFlags);
     [DllImport("user32.dll")] internal static extern IntPtr MonitorFromWindow(IntPtr hwnd, uint dwFlags);
