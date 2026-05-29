@@ -24,6 +24,7 @@ public partial class MainWindow : Window
     private double _anchorX, _anchorY;
     private bool _isRepositioning;
     private bool _isLoaded;
+    private double _autoHeight;
 
     private const int SnapThreshold = 20; // physical pixels
 
@@ -174,6 +175,26 @@ public partial class MainWindow : Window
                 NativeMethods.SWP_NOSIZE | NativeMethods.SWP_NOZORDER | NativeMethods.SWP_NOACTIVATE);
     }
 
+    // ── Positioning & height ──────────────────────────────────────────────────
+
+    private void SizeToTickets(int count)
+    {
+        // Approximate measured heights from XAML (header padding+content, row padding+content)
+        const double HeaderH = 50;
+        const double RowH    = 52;
+        const double EmptyH  = 155;
+
+        double target = Math.Max(MinHeight,
+            HeaderH + (count > 0 ? Math.Min(count, 3) * RowH : EmptyH));
+
+        // Respect a user-expanded window — only auto-resize when the window is at or
+        // below the last auto-set height, or when clearing all tickets (empty state).
+        if (Height <= _autoHeight + 1 || count == 0)
+            Height = target;
+
+        _autoHeight = target;
+    }
+
     // ── Ticket updates ────────────────────────────────────────────────────────
 
     public void UpdateTickets(List<Ticket> tickets)
@@ -190,6 +211,7 @@ public partial class MainWindow : Window
 
         _knownTicketIds = tickets.Select(t => t.Id).ToHashSet();
         TicketList.ItemsSource = tickets;
+        SizeToTickets(tickets.Count);
 
         var hasTickets = tickets.Count > 0;
         TicketScrollViewer.Visibility = hasTickets ? Visibility.Visible : Visibility.Collapsed;

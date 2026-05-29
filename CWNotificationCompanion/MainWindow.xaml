@@ -6,7 +6,6 @@
         Icon="/Resources/CWNotify.ico"
         Width="760" MinWidth="600"
         MinHeight="150"
-        SizeToContent="Height"
         Topmost="True"
         WindowStyle="SingleBorderWindow"
         ResizeMode="CanResizeWithGrip"
@@ -24,7 +23,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
         <!-- Header -->
@@ -71,7 +70,6 @@
 
         <!-- Ticket List: MaxHeight caps growth; SizeToContent drives window height up to that point -->
         <ScrollViewer Grid.Row="2" x:Name="TicketScrollViewer"
-                      MaxHeight="148"
                       VerticalScrollBarVisibility="Auto"
                       HorizontalScrollBarVisibility="Disabled">
             <ItemsControl x:Name="TicketList" Background="{DynamicResource CardBrush}">
