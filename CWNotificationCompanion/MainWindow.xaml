@@ -5,7 +5,7 @@
         Title="CW Notification Companion"
         Icon="/Resources/CWNotify.ico"
         Width="760" MinWidth="600"
-        MinHeight="200" MaxHeight="560"
+        MinHeight="150"
         SizeToContent="Height"
         Topmost="True"
         WindowStyle="SingleBorderWindow"
@@ -23,7 +23,8 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- Header -->
@@ -50,7 +51,6 @@
                 Background="{DynamicResource ErrorBgBrush}"
                 BorderBrush="{DynamicResource ErrorBorderBrush}"
                 BorderThickness="0,0,0,1"
-                VerticalAlignment="Top"
                 Padding="16,10" Visibility="Collapsed">
             <TextBlock x:Name="ErrorText"
                        Foreground="{DynamicResource ErrorTextBrush}"
@@ -58,7 +58,7 @@
         </Border>
 
         <!-- Empty State -->
-        <Border Grid.Row="1" x:Name="EmptyState" Padding="40,32" Visibility="Collapsed">
+        <Border Grid.Row="2" x:Name="EmptyState" Padding="40,32" Visibility="Collapsed">
             <StackPanel HorizontalAlignment="Center">
                 <TextBlock Text="✓" FontSize="40"
                            Foreground="{DynamicResource SuccessTextBrush}"
@@ -69,8 +69,9 @@
             </StackPanel>
         </Border>
 
-        <!-- Ticket List -->
-        <ScrollViewer Grid.Row="1" x:Name="TicketScrollViewer"
+        <!-- Ticket List: MaxHeight caps growth; SizeToContent drives window height up to that point -->
+        <ScrollViewer Grid.Row="2" x:Name="TicketScrollViewer"
+                      MaxHeight="490"
                       VerticalScrollBarVisibility="Auto"
                       HorizontalScrollBarVisibility="Disabled">
             <ItemsControl x:Name="TicketList" Background="{DynamicResource CardBrush}">
