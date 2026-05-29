@@ -71,7 +71,7 @@
 
         <!-- Ticket List: MaxHeight caps growth; SizeToContent drives window height up to that point -->
         <ScrollViewer Grid.Row="2" x:Name="TicketScrollViewer"
-                      MaxHeight="490"
+                      MaxHeight="148"
                       VerticalScrollBarVisibility="Auto"
                       HorizontalScrollBarVisibility="Disabled">
             <ItemsControl x:Name="TicketList" Background="{DynamicResource CardBrush}">
