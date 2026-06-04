@@ -13,6 +13,8 @@ namespace CWNotificationCompanion;
 
 public partial class App : System.Windows.Application
 {
+    private const string AppId = "CWNotificationCompanion.App";
+
     private WinForms.NotifyIcon? _trayIcon;
     private MainWindow? _mainWindow;
     private SettingsWindow? _settingsWindow;
@@ -29,6 +31,7 @@ public partial class App : System.Windows.Application
 
         var settings = _settingsService.Load();
         ApplyTheme(settings.DarkMode);
+        RegisterAumid();
 
         InitializeTrayIcon();
         StartPolling();
@@ -80,8 +83,7 @@ public partial class App : System.Windows.Application
             if (e.Button != WinForms.MouseButtons.Right) return;
             Dispatcher.Invoke(() => OpenTrayMenu(trayMenu));
         };
-        _trayIcon.DoubleClick       += (_, _) => Dispatcher.Invoke(() => ShowMainWindow(null));
-        _trayIcon.BalloonTipClicked += (_, _) => Dispatcher.Invoke(() => ShowMainWindow(null));
+        _trayIcon.DoubleClick += (_, _) => Dispatcher.Invoke(() => ShowMainWindow(null));
     }
 
     private static void OpenTrayMenu(System.Windows.Controls.ContextMenu menu)
@@ -229,9 +231,21 @@ public partial class App : System.Windows.Application
         }
     }
 
+    private static void RegisterAumid()
+    {
+        // Unpackaged Win32 apps must register an AppUserModelId in the registry
+        // before Windows will accept and store their toast notifications.
+        using var key = Microsoft.Win32.Registry.CurrentUser.CreateSubKey(
+            $@"SOFTWARE\Classes\AppUserModelId\{AppId}");
+        key.SetValue("DisplayName", "CW Notification Companion");
+        var exe = System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName ?? "";
+        if (!string.IsNullOrEmpty(exe))
+            key.SetValue("IconUri", exe);
+    }
+
     private void ShowNewTicketNotification(List<Ticket> newTickets)
     {
-        if (_trayIcon == null || newTickets.Count == 0) return;
+        if (newTickets.Count == 0) return;
 
         string title, body;
         if (newTickets.Count == 1)
@@ -247,7 +261,27 @@ public partial class App : System.Windows.Application
             body  = string.Join(", ", companies) + (newTickets.Count > 3 ? " …" : "");
         }
 
-        _trayIcon.ShowBalloonTip(6000, title, body, WinForms.ToolTipIcon.Info);
+        var xml = $"""
+            <toast>
+              <visual>
+                <binding template="ToastGeneric">
+                  <text>{System.Security.SecurityElement.Escape(title)}</text>
+                  <text>{System.Security.SecurityElement.Escape(body)}</text>
+                </binding>
+              </visual>
+            </toast>
+            """;
+
+        try
+        {
+            var doc = new Windows.Data.Xml.Dom.XmlDocument();
+            doc.LoadXml(xml);
+            var toast = new Windows.UI.Notifications.ToastNotification(doc);
+            toast.Activated += (_, _) => Dispatcher.Invoke(() => ShowMainWindow(null));
+            Windows.UI.Notifications.ToastNotificationManager
+                .CreateToastNotifier(AppId).Show(toast);
+        }
+        catch { /* notification failure is non-fatal */ }
     }
 
     public void ShowMainWindow(List<Ticket>? tickets)
