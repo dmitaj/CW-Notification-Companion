@@ -169,12 +169,6 @@ public partial class App : System.Windows.Application
                     var newTickets     = tickets.Where(t => !_knownTicketIds.Contains(t.Id)).ToList();
                     bool hasNewTickets = newTickets.Count > 0;
 
-                    // Capture visibility BEFORE we show/restore the window so the
-                    // notification check reflects what the user could actually see.
-                    bool windowWasActive = _mainWindow != null &&
-                                          _mainWindow.IsVisible &&
-                                          _mainWindow.WindowState != WindowState.Minimized;
-
                     if (_mainWindow == null || !_mainWindow.IsLoaded)
                         _mainWindow = new MainWindow(_settingsService, _cwService);
 
@@ -191,8 +185,7 @@ public partial class App : System.Windows.Application
                         var hwnd = new System.Windows.Interop.WindowInteropHelper(_mainWindow).Handle;
                         NativeMethods.ShowWindow(hwnd, NativeMethods.SW_RESTORE);
                         NativeMethods.SetForegroundWindow(hwnd);
-                        if (!windowWasActive)
-                            ShowNewTicketNotification(newTickets);
+                        ShowNewTicketNotification(newTickets);
                     }
 
                     _knownTicketIds.Clear();
