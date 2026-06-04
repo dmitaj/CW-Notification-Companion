@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -25,6 +26,7 @@ public partial class App : System.Windows.Application
     private readonly ConnectWiseService _cwService = new();
     private readonly SettingsService _settingsService = new();
     private readonly HashSet<int> _knownTicketIds = new();
+    private string? _notificationIconPath;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -233,6 +235,22 @@ public partial class App : System.Windows.Application
         }
     }
 
+    private string? GetNotificationIconPath()
+    {
+        if (_notificationIconPath != null) return _notificationIconPath;
+        try
+        {
+            var stream = GetResourceStream(new Uri("pack://application:,,,/Resources/CWNotify-256.png"))?.Stream;
+            if (stream == null) return null;
+            var path = Path.Combine(Path.GetTempPath(), "CWNotify-256.png");
+            using var fs = System.IO.File.Create(path);
+            stream.CopyTo(fs);
+            _notificationIconPath = path;
+        }
+        catch { }
+        return _notificationIconPath;
+    }
+
     private static void RegisterAumid()
     {
         // Unpackaged Win32 apps must register an AppUserModelId in the registry
@@ -263,12 +281,18 @@ public partial class App : System.Windows.Application
             body  = string.Join(", ", companies) + (newTickets.Count > 3 ? " …" : "");
         }
 
+        var iconPath = GetNotificationIconPath();
+        var logoXml  = iconPath != null
+            ? $"""<image placement="appLogoOverride" src="file:///{iconPath.Replace('\\', '/')}" hint-crop="circle"/>"""
+            : "";
+
         var xml = $"""
             <toast>
               <visual>
                 <binding template="ToastGeneric">
                   <text>{System.Security.SecurityElement.Escape(title)}</text>
                   <text>{System.Security.SecurityElement.Escape(body)}</text>
+                  {logoXml}
                 </binding>
               </visual>
             </toast>
