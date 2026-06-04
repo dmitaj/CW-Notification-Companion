@@ -80,7 +80,8 @@ public partial class App : System.Windows.Application
             if (e.Button != WinForms.MouseButtons.Right) return;
             Dispatcher.Invoke(() => OpenTrayMenu(trayMenu));
         };
-        _trayIcon.DoubleClick += (_, _) => Dispatcher.Invoke(() => ShowMainWindow(null));
+        _trayIcon.DoubleClick       += (_, _) => Dispatcher.Invoke(() => ShowMainWindow(null));
+        _trayIcon.BalloonTipClicked += (_, _) => Dispatcher.Invoke(() => ShowMainWindow(null));
     }
 
     private static void OpenTrayMenu(System.Windows.Controls.ContextMenu menu)
@@ -165,7 +166,8 @@ public partial class App : System.Windows.Application
             {
                 if (tickets.Count > 0)
                 {
-                    bool hasNewTickets = tickets.Any(t => !_knownTicketIds.Contains(t.Id));
+                    var newTickets    = tickets.Where(t => !_knownTicketIds.Contains(t.Id)).ToList();
+                    bool hasNewTickets = newTickets.Count > 0;
 
                     if (_mainWindow == null || !_mainWindow.IsLoaded)
                         _mainWindow = new MainWindow(_settingsService, _cwService);
@@ -183,6 +185,7 @@ public partial class App : System.Windows.Application
                         var hwnd = new System.Windows.Interop.WindowInteropHelper(_mainWindow).Handle;
                         NativeMethods.ShowWindow(hwnd, NativeMethods.SW_RESTORE);
                         NativeMethods.SetForegroundWindow(hwnd);
+                        ShowNewTicketNotification(newTickets);
                     }
 
                     _knownTicketIds.Clear();
@@ -224,6 +227,32 @@ public partial class App : System.Windows.Application
             var helper = new System.Windows.Interop.WindowInteropHelper(_mainWindow);
             NativeMethods.FlashWindow(helper.Handle, true);
         }
+    }
+
+    private void ShowNewTicketNotification(List<Ticket> newTickets)
+    {
+        if (_trayIcon == null || newTickets.Count == 0) return;
+
+        // Suppress if the window is already in front and visible.
+        if (_mainWindow != null && _mainWindow.IsVisible &&
+            _mainWindow.WindowState != WindowState.Minimized)
+            return;
+
+        string title, body;
+        if (newTickets.Count == 1)
+        {
+            var t = newTickets[0];
+            title = $"#{t.Id} — {t.CompanyDisplay}";
+            body  = t.Summary.Length > 100 ? t.Summary[..100] + "…" : t.Summary;
+        }
+        else
+        {
+            title = $"{newTickets.Count} new client responses";
+            var companies = newTickets.Take(3).Select(t => t.CompanyDisplay);
+            body  = string.Join(", ", companies) + (newTickets.Count > 3 ? " …" : "");
+        }
+
+        _trayIcon.ShowBalloonTip(6000, title, body, WinForms.ToolTipIcon.Info);
     }
 
     public void ShowMainWindow(List<Ticket>? tickets)
