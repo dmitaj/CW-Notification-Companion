@@ -6,6 +6,8 @@ using System.Windows;
 using Drawing = System.Drawing;
 using Drawing2D = System.Drawing.Drawing2D;
 using WinForms = System.Windows.Forms;
+using WinToast = Windows.UI.Notifications;
+using WinXml = Windows.Data.Xml.Dom;
 using CWNotificationCompanion.Models;
 using CWNotificationCompanion.Services;
 
@@ -274,12 +276,11 @@ public partial class App : System.Windows.Application
 
         try
         {
-            var doc = new Windows.Data.Xml.Dom.XmlDocument();
+            var doc = new WinXml.XmlDocument();
             doc.LoadXml(xml);
-            var toast = new Windows.UI.Notifications.ToastNotification(doc);
+            var toast = new WinToast.ToastNotification(doc);
             toast.Activated += (_, _) => Dispatcher.Invoke(() => ShowMainWindow(null));
-            Windows.UI.Notifications.ToastNotificationManager
-                .CreateToastNotifier(AppId).Show(toast);
+            WinToast.ToastNotificationManager.CreateToastNotifier(AppId).Show(toast);
         }
         catch { /* notification failure is non-fatal */ }
     }
