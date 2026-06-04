@@ -166,8 +166,14 @@ public partial class App : System.Windows.Application
             {
                 if (tickets.Count > 0)
                 {
-                    var newTickets    = tickets.Where(t => !_knownTicketIds.Contains(t.Id)).ToList();
+                    var newTickets     = tickets.Where(t => !_knownTicketIds.Contains(t.Id)).ToList();
                     bool hasNewTickets = newTickets.Count > 0;
+
+                    // Capture visibility BEFORE we show/restore the window so the
+                    // notification check reflects what the user could actually see.
+                    bool windowWasActive = _mainWindow != null &&
+                                          _mainWindow.IsVisible &&
+                                          _mainWindow.WindowState != WindowState.Minimized;
 
                     if (_mainWindow == null || !_mainWindow.IsLoaded)
                         _mainWindow = new MainWindow(_settingsService, _cwService);
@@ -185,7 +191,8 @@ public partial class App : System.Windows.Application
                         var hwnd = new System.Windows.Interop.WindowInteropHelper(_mainWindow).Handle;
                         NativeMethods.ShowWindow(hwnd, NativeMethods.SW_RESTORE);
                         NativeMethods.SetForegroundWindow(hwnd);
-                        ShowNewTicketNotification(newTickets);
+                        if (!windowWasActive)
+                            ShowNewTicketNotification(newTickets);
                     }
 
                     _knownTicketIds.Clear();
@@ -232,11 +239,6 @@ public partial class App : System.Windows.Application
     private void ShowNewTicketNotification(List<Ticket> newTickets)
     {
         if (_trayIcon == null || newTickets.Count == 0) return;
-
-        // Suppress if the window is already in front and visible.
-        if (_mainWindow != null && _mainWindow.IsVisible &&
-            _mainWindow.WindowState != WindowState.Minimized)
-            return;
 
         string title, body;
         if (newTickets.Count == 1)
