@@ -33,6 +33,14 @@ public partial class App : System.Windows.Application
         base.OnStartup(e);
         ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
+        // Toast notifications from an unpackaged desktop app require BOTH:
+        //   1. the process to declare its AppUserModelID, and
+        //   2. a Start Menu shortcut carrying that same AUMID.
+        // Without the shortcut, ToastNotificationManager silently refuses to
+        // display the toast. Do this first, before any UI is created.
+        NativeMethods.SetCurrentProcessExplicitAppUserModelID(AppId);
+        StartMenuShortcut.EnsureExists(AppId, "CW Notification Companion");
+
         var settings = _settingsService.Load();
         ApplyTheme(settings.DarkMode);
         RegisterAumid();
@@ -304,9 +312,14 @@ public partial class App : System.Windows.Application
             doc.LoadXml(xml);
             var toast = new WinToast.ToastNotification(doc);
             toast.Activated += (_, _) => Dispatcher.Invoke(() => ShowMainWindow(null));
+            toast.Failed += (_, args) => Logger.Error($"Toast failed to display (ErrorCode={args.ErrorCode}).");
             WinToast.ToastNotificationManager.CreateToastNotifier(AppId).Show(toast);
         }
-        catch { /* notification failure is non-fatal */ }
+        catch (Exception ex)
+        {
+            // Non-fatal, but no longer silent — surface it so the cause is diagnosable.
+            Logger.Error("Failed to show toast notification", ex);
+        }
     }
 
     public void ShowMainWindow(List<Ticket>? tickets)

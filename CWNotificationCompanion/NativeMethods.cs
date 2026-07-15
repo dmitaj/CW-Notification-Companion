@@ -5,6 +5,11 @@ namespace CWNotificationCompanion;
 
 internal static class NativeMethods
 {
+    // Associates the running process with its AppUserModelID so Windows attributes
+    // toast notifications (and the taskbar/Start grouping) to the correct app.
+    [DllImport("shell32.dll", CharSet = CharSet.Unicode, PreserveSig = false)]
+    internal static extern void SetCurrentProcessExplicitAppUserModelID([MarshalAs(UnmanagedType.LPWStr)] string appID);
+
     [DllImport("user32.dll")] internal static extern bool FlashWindow(IntPtr hwnd, bool bInvert);
     [DllImport("user32.dll")] internal static extern bool SetForegroundWindow(IntPtr hwnd);
     [DllImport("user32.dll")] internal static extern bool ShowWindow(IntPtr hwnd, int nCmdShow);
