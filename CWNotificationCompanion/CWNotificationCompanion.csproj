@@ -13,6 +13,7 @@
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <ApplicationIcon>Resources\CWNotify.ico</ApplicationIcon>
   </PropertyGroup>
 
   <!-- WinForms implicit usings clash with WPF/Media types; removed globally, added as aliases in App.xaml.cs -->
