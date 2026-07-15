@@ -12,6 +12,7 @@ public class AppSettings
     public string CompanySlug { get; set; } = "";
     public string ResourceFilter { get; set; } = "";
     public int PollIntervalMinutes { get; set; } = 5;
+    public int MaxVisibleTickets { get; set; } = 3;
     public AnchorCorner AnchorCorner { get; set; } = AnchorCorner.BottomRight;
     public bool DarkMode { get; set; } = false;
     public double? SavedLeft { get; set; }

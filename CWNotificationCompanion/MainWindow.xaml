@@ -5,7 +5,7 @@
         Title="CW Notification Companion"
         Icon="/Resources/CWNotify.ico"
         Width="760" MinWidth="600"
-        MinHeight="150"
+        SizeToContent="Height"
         Topmost="True"
         WindowStyle="SingleBorderWindow"
         ResizeMode="CanResizeWithGrip"
@@ -23,7 +23,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- Header -->

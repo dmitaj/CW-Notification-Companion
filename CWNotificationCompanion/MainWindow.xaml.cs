@@ -24,9 +24,14 @@ public partial class MainWindow : Window
     private double _anchorX, _anchorY;
     private bool _isRepositioning;
     private bool _isLoaded;
-    private double _autoHeight;
 
     private const int SnapThreshold = 20; // physical pixels
+
+    // Approximate rendered height of one ticket row (border padding + the tallest
+    // row content, the "Open in CW" button). Only used as a cap on the ScrollViewer's
+    // growth — Window.SizeToContent measures the real content, so this doesn't need
+    // to be pixel-perfect, just not an underestimate (that would clip the last row).
+    private const double RowH = 56;
 
     public MainWindow(SettingsService settingsService, ConnectWiseService cwService)
     {
@@ -34,7 +39,14 @@ public partial class MainWindow : Window
         _cwService = cwService;
         InitializeComponent();
         Loaded += OnLoaded;
+        ApplyMaxVisibleTicketsSetting();
         UpdateTickets([]);
+    }
+
+    private void ApplyMaxVisibleTicketsSetting()
+    {
+        var maxVisible = Math.Max(1, _settingsService.Load().MaxVisibleTickets);
+        TicketScrollViewer.MaxHeight = maxVisible * RowH;
     }
 
     // ── Positioning & anchoring ───────────────────────────────────────────────
@@ -127,6 +139,7 @@ public partial class MainWindow : Window
     public void RefreshAnchor()
     {
         _anchorCorner = _settingsService.Load().AnchorCorner;
+        ApplyMaxVisibleTicketsSetting();
         if (_isLoaded)
             PositionToAnchorCorner();
     }
@@ -175,26 +188,6 @@ public partial class MainWindow : Window
                 NativeMethods.SWP_NOSIZE | NativeMethods.SWP_NOZORDER | NativeMethods.SWP_NOACTIVATE);
     }
 
-    // ── Positioning & height ──────────────────────────────────────────────────
-
-    private void SizeToTickets(int count)
-    {
-        // Approximate measured heights from XAML (header padding+content, row padding+content)
-        const double HeaderH = 50;
-        const double RowH    = 52;
-        const double EmptyH  = 155;
-
-        double target = Math.Max(MinHeight,
-            HeaderH + (count > 0 ? Math.Min(count, 3) * RowH : EmptyH));
-
-        // Respect a user-expanded window — only auto-resize when the window is at or
-        // below the last auto-set height, or when clearing all tickets (empty state).
-        if (Height <= _autoHeight + 1 || count == 0)
-            Height = target;
-
-        _autoHeight = target;
-    }
-
     // ── Ticket updates ────────────────────────────────────────────────────────
 
     public void UpdateTickets(List<Ticket> tickets)
@@ -211,7 +204,6 @@ public partial class MainWindow : Window
 
         _knownTicketIds = tickets.Select(t => t.Id).ToHashSet();
         TicketList.ItemsSource = tickets;
-        SizeToTickets(tickets.Count);
 
         var hasTickets = tickets.Count > 0;
         TicketScrollViewer.Visibility = hasTickets ? Visibility.Visible : Visibility.Collapsed;

@@ -122,6 +122,14 @@
                              ToolTip="How often to check ConnectWise for new responses"/>
                 </StackPanel>
 
+                <!-- Max Visible Tickets -->
+                <StackPanel Margin="0,0,0,14">
+                    <TextBlock Text="Max Visible Tickets" Style="{DynamicResource FormLabel}"/>
+                    <TextBox x:Name="MaxVisibleTicketsBox" Style="{DynamicResource FormTextBox}"
+                             Width="100" HorizontalAlignment="Left"
+                             ToolTip="How many tickets the window shows before scrolling. The window resizes to fit this many, or fewer if there are fewer tickets."/>
+                </StackPanel>
+
                 <!-- Dark Mode -->
                 <StackPanel Margin="0,0,0,20" Orientation="Horizontal">
                     <CheckBox x:Name="DarkModeBox" VerticalAlignment="Center" Margin="0,0,8,0"

@@ -31,6 +31,7 @@ public partial class SettingsWindow : Window
         ResourceFilterBox.Text = s.ResourceFilter;
         AnchorCornerBox.SelectedIndex = (int)s.AnchorCorner;
         PollIntervalBox.Text = s.PollIntervalMinutes.ToString();
+        MaxVisibleTicketsBox.Text = s.MaxVisibleTickets.ToString();
         DarkModeBox.IsChecked = s.DarkMode;
     }
 
@@ -38,6 +39,9 @@ public partial class SettingsWindow : Window
     {
         if (!int.TryParse(PollIntervalBox.Text.Trim(), out int interval) || interval < 1)
             interval = 5;
+
+        if (!int.TryParse(MaxVisibleTicketsBox.Text.Trim(), out int maxVisible) || maxVisible < 1)
+            maxVisible = 3;
 
         return new AppSettings
         {
@@ -50,6 +54,7 @@ public partial class SettingsWindow : Window
             ResourceFilter = ResourceFilterBox.Text.Trim(),
             AnchorCorner = (AnchorCorner)(AnchorCornerBox.SelectedIndex < 0 ? 3 : AnchorCornerBox.SelectedIndex),
             PollIntervalMinutes = interval,
+            MaxVisibleTickets = maxVisible,
             DarkMode = DarkModeBox.IsChecked == true
         };
     }
