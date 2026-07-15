@@ -193,13 +193,17 @@ public partial class App : System.Windows.Application
 
                     if (hasNewTickets)
                     {
+                        // Show the toast BEFORE stealing focus: Windows silently drops the
+                        // toast banner for an app that is already the foreground window, so
+                        // SetForegroundWindow must happen after Show(), not before.
+                        ShowNewTicketNotification(newTickets);
+
                         // SW_RESTORE unminimizes if needed, activates otherwise.
                         // SetForegroundWindow forces the window to the front even from
                         // a background process, which Activate() cannot reliably do.
                         var hwnd = new System.Windows.Interop.WindowInteropHelper(_mainWindow).Handle;
                         NativeMethods.ShowWindow(hwnd, NativeMethods.SW_RESTORE);
                         NativeMethods.SetForegroundWindow(hwnd);
-                        ShowNewTicketNotification(newTickets);
                     }
 
                     _knownTicketIds.Clear();
