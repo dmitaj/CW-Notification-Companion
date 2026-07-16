@@ -52,6 +52,15 @@ public class ConnectWiseService
         return JsonSerializer.Deserialize<List<Ticket>>(json, _jsonOptions) ?? [];
     }
 
+    /// <summary>
+    /// Builds the deep link that opens a service ticket in the ConnectWise web UI
+    /// (the same "openrecord.rails" URL used by the ticket list's open button).
+    /// </summary>
+    public static string BuildTicketUrl(AppSettings settings, int ticketId) =>
+        "https://api-na.myconnectwise.net/v4_6_release/services/system_io/router/openrecord.rails" +
+        $"?locale=en_US&companyName={Uri.EscapeDataString(settings.CompanySlug)}" +
+        $"&recordType=ServiceFV&recid={ticketId}";
+
     public async Task<(bool success, string message)> TestConnectionAsync(AppSettings settings)
     {
         try

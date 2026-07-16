@@ -270,9 +270,7 @@ public partial class MainWindow : Window
         if (sender is Button { Tag: Ticket ticket })
         {
             var settings = _settingsService.Load();
-            var url = $"https://api-na.myconnectwise.net/v4_6_release/services/system_io/router/openrecord.rails" +
-                      $"?locale=en_US&companyName={Uri.EscapeDataString(settings.CompanySlug)}" +
-                      $"&recordType=ServiceFV&recid={ticket.Id}";
+            var url = ConnectWiseService.BuildTicketUrl(settings, ticket.Id);
             Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
         }
     }

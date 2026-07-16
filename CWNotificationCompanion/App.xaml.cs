@@ -280,6 +280,10 @@ public partial class App : System.Windows.Application
         if (newTickets.Count == 0) return;
 
         string title, body;
+        // A single-ticket toast deep-links to that ticket; a multi-ticket toast
+        // has no single target, so it just surfaces the app window.
+        int? singleTicketId = newTickets.Count == 1 ? newTickets[0].Id : null;
+
         if (newTickets.Count == 1)
         {
             var t = newTickets[0];
@@ -315,7 +319,13 @@ public partial class App : System.Windows.Application
             var doc = new WinXml.XmlDocument();
             doc.LoadXml(xml);
             var toast = new WinToast.ToastNotification(doc);
-            toast.Activated += (_, _) => Dispatcher.Invoke(() => ShowMainWindow(null));
+            toast.Activated += (_, _) => Dispatcher.Invoke(() =>
+            {
+                if (singleTicketId is int ticketId)
+                    OpenTicketInBrowser(ticketId);
+                else
+                    ShowMainWindow(null);
+            });
             toast.Failed += (_, args) => Logger.Error($"Toast failed to display (ErrorCode={args.ErrorCode}).");
             WinToast.ToastNotificationManager.CreateToastNotifier(AppId).Show(toast);
         }
@@ -323,6 +333,20 @@ public partial class App : System.Windows.Application
         {
             // Non-fatal, but no longer silent — surface it so the cause is diagnosable.
             Logger.Error("Failed to show toast notification", ex);
+        }
+    }
+
+    private void OpenTicketInBrowser(int ticketId)
+    {
+        try
+        {
+            var settings = _settingsService.Load();
+            var url = ConnectWiseService.BuildTicketUrl(settings, ticketId);
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute = true });
+        }
+        catch (Exception ex)
+        {
+            Logger.Error("Failed to open ticket in browser", ex);
         }
     }
 
