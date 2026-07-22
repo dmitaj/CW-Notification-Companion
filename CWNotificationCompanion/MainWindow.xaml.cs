@@ -26,6 +26,13 @@ public partial class MainWindow : Window
     private bool _isLoaded;
     private double _lastAutoHeight = double.NaN;
 
+    // Height contributed by everything except the ticket area itself (header,
+    // error bar, OS window chrome). Calibrated once from the already-rendered
+    // window in OnLoaded, then reused as plain arithmetic - see
+    // RecalculateHeightBounds for why this avoids resizing the real window
+    // repeatedly just to measure it.
+    private double _chromeOffset = double.NaN;
+
     private const int SnapThreshold = 20; // physical pixels
 
     // Approximate rendered height of one ticket row (border padding + the tallest
@@ -74,9 +81,38 @@ public partial class MainWindow : Window
 
         _isLoaded = true;
 
+        // Read the chrome contribution from the window's already-rendered initial
+        // size - this is a cache-fill, not a resize, so it can't cause any flicker.
+        EnsureChromeOffsetCalibrated();
+
+        // XAML's SizeToContent="Height" got the very first display right without
+        // needing any of this class's code (relying on the ScrollViewer.MaxHeight
+        // set in the constructor). From here on we take over explicitly - leaving
+        // SizeToContent on would keep fighting every Height assignment below back
+        // to the ScrollViewer's capped natural size, silently undoing both manual
+        // resize past that cap and preserving the user's chosen height.
+        SizeToContent = SizeToContent.Manual;
+
+        // That constructor-set MaxHeight is also a persistent property, not just a
+        // one-time hint - left in place, it would clamp every Measure() call below
+        // to the OLD cap regardless of what size is passed in, no matter what count
+        // actually is. From here on the *window's* Height (bounded by MinHeight/
+        // MaxHeight, computed below) is what limits visible rows, not this.
+        TicketScrollViewer.MaxHeight = double.PositiveInfinity;
+
         // Establish resize bounds immediately on first display too, not just starting
         // from the next poll's UpdateTickets call - see RecalculateHeightBounds for why.
         RecalculateHeightBounds(TicketList.Items.Count);
+    }
+
+    private void EnsureChromeOffsetCalibrated()
+    {
+        if (!double.IsNaN(_chromeOffset)) return;
+
+        if (TicketScrollViewer.Visibility == Visibility.Visible)
+            _chromeOffset = ActualHeight - TicketScrollViewer.ActualHeight;
+        else if (EmptyState.Visibility == Visibility.Visible)
+            _chromeOffset = ActualHeight - EmptyState.ActualHeight;
     }
 
     /// <summary>
@@ -87,57 +123,47 @@ public partial class MainWindow : Window
     /// The window can be dragged as small as showing one ticket, or as large as
     /// showing every currently pending ticket with no scrolling - never smaller
     /// or larger than that, since there's nothing useful on either side of that
-    /// range. Each bound is measured with a real layout pass (toggling
-    /// SizeToContent on) rather than computed from RowH arithmetic alone, so it
-    /// can't drift out of sync with the actual rendered row height.
+    /// range.
+    ///
+    /// Each bound comes from Measure()/DesiredSize on the ticket area against a
+    /// hypothetical height, added to the cached chrome offset - not from actually
+    /// resizing the real window to see what fits (which visibly flickered the
+    /// window on every single poll, even when the ticket count hadn't changed).
     /// </summary>
     private void RecalculateHeightBounds(int count)
     {
-        // Capture BEFORE the measurement passes below touch Height - otherwise this
-        // would compare the freshly-measured auto height against itself, always
-        // reporting "unchanged" and silently discarding any manual resize.
+        // Capture BEFORE anything below touches Height - otherwise "did the user
+        // manually resize" would compare the freshly-computed auto height against
+        // itself, always reporting "unchanged" and discarding any manual resize.
         double heightBeforeMeasurement = Height;
+        double chrome = double.IsNaN(_chromeOffset) ? 0 : _chromeOffset;
 
         if (count == 0)
         {
-            // Nothing to size a range around - just fit the empty state exactly.
-            MinHeight = 0;
-            MaxHeight = double.PositiveInfinity;
-            TicketScrollViewer.MaxHeight = double.PositiveInfinity;
-            SizeToContent = SizeToContent.Height;
-            UpdateLayout();
-            SizeToContent = SizeToContent.Manual;
-            MinHeight = ActualHeight;
-            MaxHeight = ActualHeight;
-            _lastAutoHeight = ActualHeight;
+            EmptyState.InvalidateMeasure();
+            EmptyState.Measure(new Size(ActualWidth, double.PositiveInfinity));
+            double emptyHeight = chrome + EmptyState.DesiredSize.Height;
+
+            MinHeight = emptyHeight;
+            MaxHeight = emptyHeight;
+            Height = emptyHeight;
+            _lastAutoHeight = emptyHeight;
             return;
         }
 
         int maxVisible = Math.Max(1, _settingsService.Load().MaxVisibleTickets);
 
-        // Unconstrained each time so a stale bound from the previous ticket count
-        // can't distort this measurement.
-        MinHeight = 0;
-        MaxHeight = double.PositiveInfinity;
-        SizeToContent = SizeToContent.Height;
+        TicketScrollViewer.InvalidateMeasure();
+        TicketScrollViewer.Measure(new Size(ActualWidth, count * RowH));
+        double maxHeight = chrome + TicketScrollViewer.DesiredSize.Height;
 
-        TicketScrollViewer.MaxHeight = count * RowH;
-        UpdateLayout();
-        double maxHeight = ActualHeight;
+        TicketScrollViewer.InvalidateMeasure();
+        TicketScrollViewer.Measure(new Size(ActualWidth, RowH));
+        double minHeight = chrome + TicketScrollViewer.DesiredSize.Height;
 
-        TicketScrollViewer.MaxHeight = RowH;
-        UpdateLayout();
-        double minHeight = ActualHeight;
-
-        TicketScrollViewer.MaxHeight = Math.Min(count, maxVisible) * RowH;
-        UpdateLayout();
-        double autoHeight = ActualHeight;
-
-        // Hand height control back to us: let the window's own (now-bounded) height
-        // decide how many rows show without scrolling, instead of the ScrollViewer
-        // capping it — otherwise manually resizing bigger couldn't reveal more rows.
-        SizeToContent = SizeToContent.Manual;
-        TicketScrollViewer.MaxHeight = double.PositiveInfinity;
+        TicketScrollViewer.InvalidateMeasure();
+        TicketScrollViewer.Measure(new Size(ActualWidth, Math.Min(count, maxVisible) * RowH));
+        double autoHeight = chrome + TicketScrollViewer.DesiredSize.Height;
 
         bool userHasNotResized =
             double.IsNaN(_lastAutoHeight) || double.IsNaN(heightBeforeMeasurement) ||
@@ -145,11 +171,6 @@ public partial class MainWindow : Window
 
         MinHeight = minHeight;
         MaxHeight = maxHeight;
-
-        // The measurement passes above already moved Height to autoHeight as a
-        // side effect. If the user had manually resized, put their height back
-        // (clamped in case the range shrank, e.g. tickets got resolved) instead
-        // of leaving it at whatever the last measurement pass happened to set.
         Height = userHasNotResized
             ? autoHeight
             : Math.Clamp(heightBeforeMeasurement, minHeight, maxHeight);
