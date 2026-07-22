@@ -214,6 +214,12 @@ public partial class MainWindow : Window
             ? $"Client Responses — {tickets.Count} ticket{(tickets.Count == 1 ? "" : "s")} awaiting response"
             : "Client Responses — All caught up";
 
+        // Force SizeToContent's resize to settle synchronously, before the caller (App.PollAsync)
+        // can call ShowWindow(SW_RESTORE) on this window. Without this, that Win32 call can land
+        // in the gap before WPF's next layout pass runs and bake in a stale window size that never
+        // gets corrected until the *next* ticket-count change.
+        UpdateLayout();
+
         if (newestNew != null)
             Dispatcher.InvokeAsync(
                 () => FlashTicketRow(newestNew),
