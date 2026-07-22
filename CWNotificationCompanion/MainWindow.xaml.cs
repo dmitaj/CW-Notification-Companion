@@ -24,13 +24,14 @@ public partial class MainWindow : Window
     private double _anchorX, _anchorY;
     private bool _isRepositioning;
     private bool _isLoaded;
+    private double _lastAutoHeight = double.NaN;
 
     private const int SnapThreshold = 20; // physical pixels
 
     // Approximate rendered height of one ticket row (border padding + the tallest
-    // row content, the "Open in CW" button). Only used as a cap on the ScrollViewer's
-    // growth — Window.SizeToContent measures the real content, so this doesn't need
-    // to be pixel-perfect, just not an underestimate (that would clip the last row).
+    // row content, the "Open in CW" button). Only used to decide which cap to
+    // measure against — the real height always comes from an actual layout pass,
+    // so this doesn't need to be pixel-perfect, just not an underestimate.
     private const double RowH = 56;
 
     public MainWindow(SettingsService settingsService, ConnectWiseService cwService)
@@ -73,10 +74,87 @@ public partial class MainWindow : Window
 
         _isLoaded = true;
 
-        // Lock height to its natural size immediately on first display too, not just
-        // starting from the next poll's UpdateTickets call - see that method for why.
-        MinHeight = ActualHeight;
-        MaxHeight = ActualHeight;
+        // Establish resize bounds immediately on first display too, not just starting
+        // from the next poll's UpdateTickets call - see RecalculateHeightBounds for why.
+        RecalculateHeightBounds(TicketList.Items.Count);
+    }
+
+    /// <summary>
+    /// Sets how far the window can be manually resized (in height) for the given
+    /// ticket count, and auto-sizes it to the default (MaxVisibleTickets-capped)
+    /// height unless the user has manually resized away from that default.
+    ///
+    /// The window can be dragged as small as showing one ticket, or as large as
+    /// showing every currently pending ticket with no scrolling - never smaller
+    /// or larger than that, since there's nothing useful on either side of that
+    /// range. Each bound is measured with a real layout pass (toggling
+    /// SizeToContent on) rather than computed from RowH arithmetic alone, so it
+    /// can't drift out of sync with the actual rendered row height.
+    /// </summary>
+    private void RecalculateHeightBounds(int count)
+    {
+        // Capture BEFORE the measurement passes below touch Height - otherwise this
+        // would compare the freshly-measured auto height against itself, always
+        // reporting "unchanged" and silently discarding any manual resize.
+        double heightBeforeMeasurement = Height;
+
+        if (count == 0)
+        {
+            // Nothing to size a range around - just fit the empty state exactly.
+            MinHeight = 0;
+            MaxHeight = double.PositiveInfinity;
+            TicketScrollViewer.MaxHeight = double.PositiveInfinity;
+            SizeToContent = SizeToContent.Height;
+            UpdateLayout();
+            SizeToContent = SizeToContent.Manual;
+            MinHeight = ActualHeight;
+            MaxHeight = ActualHeight;
+            _lastAutoHeight = ActualHeight;
+            return;
+        }
+
+        int maxVisible = Math.Max(1, _settingsService.Load().MaxVisibleTickets);
+
+        // Unconstrained each time so a stale bound from the previous ticket count
+        // can't distort this measurement.
+        MinHeight = 0;
+        MaxHeight = double.PositiveInfinity;
+        SizeToContent = SizeToContent.Height;
+
+        TicketScrollViewer.MaxHeight = count * RowH;
+        UpdateLayout();
+        double maxHeight = ActualHeight;
+
+        TicketScrollViewer.MaxHeight = RowH;
+        UpdateLayout();
+        double minHeight = ActualHeight;
+
+        TicketScrollViewer.MaxHeight = Math.Min(count, maxVisible) * RowH;
+        UpdateLayout();
+        double autoHeight = ActualHeight;
+
+        // Hand height control back to us: let the window's own (now-bounded) height
+        // decide how many rows show without scrolling, instead of the ScrollViewer
+        // capping it — otherwise manually resizing bigger couldn't reveal more rows.
+        SizeToContent = SizeToContent.Manual;
+        TicketScrollViewer.MaxHeight = double.PositiveInfinity;
+
+        bool userHasNotResized =
+            double.IsNaN(_lastAutoHeight) || double.IsNaN(heightBeforeMeasurement) ||
+            Math.Abs(heightBeforeMeasurement - _lastAutoHeight) < 1;
+
+        MinHeight = minHeight;
+        MaxHeight = maxHeight;
+
+        // The measurement passes above already moved Height to autoHeight as a
+        // side effect. If the user had manually resized, put their height back
+        // (clamped in case the range shrank, e.g. tickets got resolved) instead
+        // of leaving it at whatever the last measurement pass happened to set.
+        Height = userHasNotResized
+            ? autoHeight
+            : Math.Clamp(heightBeforeMeasurement, minHeight, maxHeight);
+
+        _lastAutoHeight = autoHeight;
     }
 
     private void PositionToAnchorCorner()
@@ -219,24 +297,12 @@ public partial class MainWindow : Window
             ? $"Client Responses — {tickets.Count} ticket{(tickets.Count == 1 ? "" : "s")} awaiting response"
             : "Client Responses — All caught up";
 
-        // Release any previous lock so SizeToContent can freely recompute the natural
-        // height for the new ticket count, then force that resize to settle synchronously
-        // (before the caller, App.PollAsync, can call ShowWindow(SW_RESTORE) on this window -
-        // otherwise that Win32 call can land before the layout pass runs and bake in a stale size).
-        MinHeight = 0;
-        MaxHeight = double.PositiveInfinity;
-        UpdateLayout();
-
-        // Lock height to exactly that natural size so the resize grip can't drag the
-        // window taller or shorter than what the current ticket count needs - taller
-        // would just leave the ticket list floating, centered, in dead space below it.
-        // Only once actually loaded/rendered - before that, ActualHeight is still 0
-        // (this method also runs pre-Show, from the constructor and the first poll).
+        // Only once actually loaded/rendered - this method also runs pre-Show, from the
+        // constructor and the first poll, when there's no real layout to measure yet.
+        // (ApplyMaxVisibleTicketsSetting already set a sane initial ScrollViewer cap for
+        // that first, pre-load display.)
         if (_isLoaded)
-        {
-            MinHeight = ActualHeight;
-            MaxHeight = ActualHeight;
-        }
+            RecalculateHeightBounds(tickets.Count);
 
         if (newestNew != null)
             Dispatcher.InvokeAsync(
