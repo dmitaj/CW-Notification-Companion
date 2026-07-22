@@ -72,6 +72,11 @@ public partial class MainWindow : Window
         }
 
         _isLoaded = true;
+
+        // Lock height to its natural size immediately on first display too, not just
+        // starting from the next poll's UpdateTickets call - see that method for why.
+        MinHeight = ActualHeight;
+        MaxHeight = ActualHeight;
     }
 
     private void PositionToAnchorCorner()
@@ -214,11 +219,24 @@ public partial class MainWindow : Window
             ? $"Client Responses — {tickets.Count} ticket{(tickets.Count == 1 ? "" : "s")} awaiting response"
             : "Client Responses — All caught up";
 
-        // Force SizeToContent's resize to settle synchronously, before the caller (App.PollAsync)
-        // can call ShowWindow(SW_RESTORE) on this window. Without this, that Win32 call can land
-        // in the gap before WPF's next layout pass runs and bake in a stale window size that never
-        // gets corrected until the *next* ticket-count change.
+        // Release any previous lock so SizeToContent can freely recompute the natural
+        // height for the new ticket count, then force that resize to settle synchronously
+        // (before the caller, App.PollAsync, can call ShowWindow(SW_RESTORE) on this window -
+        // otherwise that Win32 call can land before the layout pass runs and bake in a stale size).
+        MinHeight = 0;
+        MaxHeight = double.PositiveInfinity;
         UpdateLayout();
+
+        // Lock height to exactly that natural size so the resize grip can't drag the
+        // window taller or shorter than what the current ticket count needs - taller
+        // would just leave the ticket list floating, centered, in dead space below it.
+        // Only once actually loaded/rendered - before that, ActualHeight is still 0
+        // (this method also runs pre-Show, from the constructor and the first poll).
+        if (_isLoaded)
+        {
+            MinHeight = ActualHeight;
+            MaxHeight = ActualHeight;
+        }
 
         if (newestNew != null)
             Dispatcher.InvokeAsync(

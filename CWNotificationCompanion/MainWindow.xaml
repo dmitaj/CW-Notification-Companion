@@ -68,10 +68,13 @@
             </StackPanel>
         </Border>
 
-        <!-- Ticket List: MaxHeight caps growth; SizeToContent drives window height up to that point -->
+        <!-- Ticket List: MaxHeight caps growth; SizeToContent drives window height up to that point.
+             VerticalAlignment="Top" keeps it pinned under the header instead of centering in any
+             leftover space if the window is ever taller than MinHeight/MaxHeight briefly allow. -->
         <ScrollViewer Grid.Row="2" x:Name="TicketScrollViewer"
                       VerticalScrollBarVisibility="Auto"
-                      HorizontalScrollBarVisibility="Disabled">
+                      HorizontalScrollBarVisibility="Disabled"
+                      VerticalAlignment="Top">
             <ItemsControl x:Name="TicketList" Background="{DynamicResource CardBrush}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
